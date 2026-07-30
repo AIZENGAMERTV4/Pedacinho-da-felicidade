@@ -14,6 +14,9 @@ export default function AdminPanel() {
   const [toppings, setToppings] = useState([]);
   const [orders, setOrders] = useState([]);
 
+  // Modal para ver a foto em tamanho maior
+  const [modalImage, setModalImage] = useState(null);
+
   useEffect(() => {
     const isLogged = sessionStorage.getItem("admin_logged");
     if (isLogged === "true") setIsAuthenticated(true);
@@ -177,7 +180,19 @@ export default function AdminPanel() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 pb-20 font-sans">
+    <div className="min-h-screen bg-slate-100 pb-20 font-sans relative">
+      
+      {/* MODAL PARA ZOOM NA FOTO DO COMPROVANTE OU ENTREGA */}
+      {modalImage && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-4 max-w-lg w-full flex flex-col items-center relative shadow-2xl">
+            <button onClick={() => setModalImage(null)} className="absolute top-3 right-3 bg-slate-100 text-slate-700 p-2 rounded-full font-bold">✕ Fechar</button>
+            <h3 className="font-black text-slate-800 mb-3 mt-2">Visualização da Imagem</h3>
+            <img src={modalImage} alt="Ampliada" className="w-full max-h-[70vh] object-contain rounded-xl border" />
+          </div>
+        </div>
+      )}
+
       <header className="bg-slate-900 text-white px-6 py-4 flex justify-between items-center shadow-md">
         <div>
           <h1 className="text-xl font-black">Painel Administrativo 🛠️</h1>
@@ -261,7 +276,7 @@ export default function AdminPanel() {
           </div>
         )}
 
-        {/* PEDIDOS COM BARRA DE PROGRESSÃO E FOTO DA CASA */}
+        {/* PEDIDOS COM COMPROVANTE PIX E FOTO DA CASA */}
         {activeTab === "orders" && (
           <div className="space-y-6">
             <h2 className="text-lg font-black text-slate-800">Gerenciamento de Pedidos em Tempo Real</h2>
@@ -284,9 +299,11 @@ export default function AdminPanel() {
                       <span className="font-black text-orange-600 text-lg">R$ {order.total.toFixed(2)}</span>
                     </div>
 
-                    <div className="pl-2 bg-slate-50 p-3 rounded-xl border border-slate-100 text-sm">
+                    <div className="pl-2 bg-slate-50 p-3 rounded-xl border border-slate-100 text-sm flex flex-col gap-1">
                       <p className="font-bold text-slate-800">Cliente: {order.customer || "Não informado"}</p>
                       <p className="text-slate-600">Endereço: {order.address || "Não informado"}</p>
+                      <p className="text-xs font-bold text-[#32BCAD] mt-1">Forma de Pagamento: {order.payment || "Pix"}</p>
+                      
                       <div className="mt-2 pt-2 border-t border-slate-200 font-medium text-xs text-slate-700">
                         {order.items.map((i, idx) => (
                           <div key={idx}>• {i.item.name} {i.toppings.length > 0 ? `(${i.toppings.map(t=>t.name).join(', ')})` : ''}</div>
@@ -294,13 +311,22 @@ export default function AdminPanel() {
                       </div>
                     </div>
 
-                    {/* Exibir foto da entrega se houver */}
-                    {order.deliveryPhoto && (
-                      <div className="pl-2">
-                        <p className="text-xs font-bold text-slate-500 mb-1">📸 Foto de comprovação enviada pelo motoboy:</p>
-                        <img src={order.deliveryPhoto} alt="Comprovação" className="w-32 h-24 object-cover rounded-xl border shadow-sm" />
-                      </div>
-                    )}
+                    {/* BOTÃO PARA VER O COMPROVANTE PIX ENVIADO */}
+                    <div className="pl-2 flex gap-4 items-center flex-wrap">
+                      {order.pixReceipt ? (
+                        <button onClick={() => setModalImage(order.pixReceipt)} className="bg-teal-50 border border-teal-200 text-teal-700 px-3 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 hover:bg-teal-100 transition-colors">
+                          <span>🧾 Ver Comprovante Pix</span>
+                        </button>
+                      ) : (
+                        <span className="text-xs text-slate-400 italic">Nenhum comprovante anexado (Pagamento na entrega)</span>
+                      )}
+
+                      {order.deliveryPhoto && (
+                        <button onClick={() => setModalImage(order.deliveryPhoto)} className="bg-blue-50 border border-blue-200 text-blue-700 px-3 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 hover:bg-blue-100 transition-colors">
+                          <span>📸 Ver Foto da Entrega</span>
+                        </button>
+                      )}
+                    </div>
 
                     {/* BOTÕES DE PROGRESSÃO */}
                     <div className="pl-2 flex flex-col sm:flex-row gap-2 pt-2 border-t border-slate-100 items-center">
@@ -310,7 +336,6 @@ export default function AdminPanel() {
                         <button onClick={() => updateOrderStatus(order.id, 'entrega')} className={`flex-1 py-2 rounded-lg font-bold text-xs ${order.status === 'entrega' ? 'bg-blue-500 text-white shadow' : 'bg-slate-100 text-slate-600'}`}>3. Entrega</button>
                       </div>
 
-                      {/* BOTÃO FINALIZAR COM UPLOAD DE FOTO DA CASA */}
                       <div className="w-full sm:w-auto">
                         <label className={`w-full sm:w-auto px-4 py-2 rounded-lg font-black text-xs cursor-pointer flex items-center justify-center gap-1 shadow transition-all ${order.status === 'finalizado' ? 'bg-green-600 text-white' : 'bg-green-500 hover:bg-green-600 text-white'}`}>
                           <span>{order.status === 'finalizado' ? 'Alterar Foto / Finalizado ✅' : '📸 Finalizar com Foto'}</span>

@@ -134,7 +134,7 @@ export default function PedacinhoDeFelicidade() {
     if (paymentMethod === "Pix") {
       setIsPixScreenOpen(true); 
     } else {
-      createActiveOrder("aguardando");
+      createActiveOrder("aguardando", null);
     }
   };
 
@@ -145,11 +145,17 @@ export default function PedacinhoDeFelicidade() {
   };
 
   const submitReceipt = () => {
-    setIsPixScreenOpen(false);
-    createActiveOrder("aguardando");
+    if (!receiptFile) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64Receipt = reader.result;
+      setIsPixScreenOpen(false);
+      createActiveOrder("aguardando", base64Receipt);
+    };
+    reader.readAsDataURL(receiptFile);
   };
 
-  const createActiveOrder = (status) => {
+  const createActiveOrder = (status, receiptImage) => {
     const newOrder = {
       id: Math.floor(Math.random() * 10000), 
       date: new Date().toLocaleDateString('pt-BR') + ' às ' + new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}),
@@ -158,6 +164,8 @@ export default function PedacinhoDeFelicidade() {
       status: status,
       customer: customerName,
       address: customerAddress,
+      payment: paymentMethod,
+      pixReceipt: receiptImage,
       deliveryPhoto: null
     };
     
@@ -191,7 +199,6 @@ export default function PedacinhoDeFelicidade() {
           <p className="text-center text-orange-600/80 text-sm mb-6">Acompanhe o status em tempo real</p>
 
           <div className="space-y-6 relative before:absolute before:inset-0 before:ml-4 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-orange-100">
-            {/* 1. Aguardando */}
             <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
               <div className={`flex items-center justify-center w-8 h-8 rounded-full border-4 border-white shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-sm ${['aguardando','producao','entrega','finalizado'].includes(activeOrder.status) ? 'bg-orange-500' : 'bg-orange-100'}`}>
                 <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -201,7 +208,6 @@ export default function PedacinhoDeFelicidade() {
               </div>
             </div>
 
-            {/* 2. Em Produção */}
             <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
               <div className={`flex items-center justify-center w-8 h-8 rounded-full border-4 border-white shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-sm ${['producao','entrega','finalizado'].includes(activeOrder.status) ? 'bg-pink-500' : 'bg-orange-100'}`}>
                 <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
@@ -211,7 +217,6 @@ export default function PedacinhoDeFelicidade() {
               </div>
             </div>
 
-            {/* 3. Saiu para Entrega */}
             <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
               <div className={`flex items-center justify-center w-8 h-8 rounded-full border-4 border-white shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-sm ${['entrega','finalizado'].includes(activeOrder.status) ? 'bg-blue-500' : 'bg-orange-100'}`}>
                 <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
@@ -221,7 +226,6 @@ export default function PedacinhoDeFelicidade() {
               </div>
             </div>
 
-            {/* 4. Finalizado */}
             <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
               <div className={`flex items-center justify-center w-8 h-8 rounded-full border-4 border-white shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-sm ${activeOrder.status === 'finalizado' ? 'bg-green-500' : 'bg-orange-100'}`}>
                 <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
@@ -238,7 +242,7 @@ export default function PedacinhoDeFelicidade() {
               {activeOrder.deliveryPhoto && (
                 <div className="mt-3">
                   <p className="text-xs font-bold text-slate-500 mb-1">Foto de comprovação da entrega:</p>
-                  <img src={activeOrder.deliveryPhoto} alt="Comprovação de Entrega" className="w-full h-40 object-cover rounded-xl border border-green-300" />
+                  <img src={activeOrder.deliveryPhoto} alt="Comprovação" className="w-full h-40 object-cover rounded-xl border border-green-300" />
                 </div>
               )}
             </div>
@@ -423,7 +427,7 @@ export default function PedacinhoDeFelicidade() {
               <span className="text-xs text-orange-600 font-bold uppercase">{cart.length} item(s)</span>
               <span className="text-slate-800 font-black text-2xl">R$ {cartSubtotal.toFixed(2)}</span>
             </div>
-            <button onClick={() => setIsCheckoutOpen(true)} className="bg-[#FFD100] text-yellow-900 font-black px-8 py-4 rounded-full font-black text-lg shadow-lg">
+            <button onClick={() => setIsCheckoutOpen(true)} className="bg-[#FFD100] text-yellow-900 px-8 py-4 rounded-full font-black text-lg shadow-lg">
               Ver Pedido
             </button>
           </div>
@@ -479,7 +483,7 @@ export default function PedacinhoDeFelicidade() {
         </div>
       )}
 
-      {/* PIX SCREEN */}
+      {/* PIX SCREEN COM ANEXO OBRIGATÓRIO */}
       {isPixScreenOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6 flex flex-col items-center relative">
@@ -495,11 +499,12 @@ export default function PedacinhoDeFelicidade() {
             <div className="w-full mb-6">
               <label className="block w-full border-2 border-dashed border-orange-300 bg-orange-50/50 rounded-xl p-4 text-center cursor-pointer">
                 <span className="text-sm font-bold text-orange-600 block mb-1">{receiptFile ? "Comprovante Anexado ✅" : "Anexar Comprovante"}</span>
+                <span className="text-xs text-slate-400">{receiptFile ? receiptFile.name : "Obrigatório para enviar o pedido"}</span>
                 <input type="file" accept="image/*" className="hidden" onChange={(e) => setReceiptFile(e.target.files[0])} />
               </label>
             </div>
             <button onClick={submitReceipt} disabled={!receiptFile} className={`w-full py-4 rounded-xl font-black text-lg ${receiptFile ? 'bg-[#32BCAD] text-white shadow-lg' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}>
-              Confirmar Pagamento
+              Enviar Comprovante e Fazer Pedido
             </button>
           </div>
         </div>
