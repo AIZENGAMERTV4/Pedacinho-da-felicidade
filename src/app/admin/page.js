@@ -33,7 +33,6 @@ export default function AdminPanel() {
       const { data: orderData } = await supabase.from('orders').select('*');
       if (orderData) {
         const formattedOrders = orderData.map(o => o.order_data);
-        // Ordenar por ID decrescente para os mais novos ficarem em cima
         formattedOrders.sort((a, b) => b.id - a.id);
         setOrders(formattedOrders);
       }
@@ -58,10 +57,9 @@ export default function AdminPanel() {
   };
 
   const saveAllChanges = async () => {
-    // Salvar no Supabase (nuvem)
     await supabase.from('store_config').upsert({ key: 'sections', value: sections });
     await supabase.from('store_config').upsert({ key: 'toppings', value: toppings });
-    alert("Alterações salvas na nuvem com sucesso! A loja inteira foi atualizada para todos os clientes.");
+    alert("Alterações salvas na nuvem com sucesso! A loja inteira foi atualizada.");
   };
 
   const addNewSection = () => {
@@ -83,7 +81,14 @@ export default function AdminPanel() {
   };
 
   const addItemToSection = (secId) => {
-    const newItem = { id: Date.now().toString(), name: "Novo Produto", description: "Descrição", price: 15.0, image: "https://images.unsplash.com/photo-1590137876181-2a5a7e340308?auto=format&fit=crop&q=80&w=300", freeLimit: 3 };
+    const newItem = { 
+      id: Date.now().toString(), 
+      name: "Novo Produto", 
+      description: "Descrição deliciosa", 
+      price: 15.0, 
+      image: "https://images.unsplash.com/photo-1590137876181-2a5a7e340308?auto=format&fit=crop&q=80&w=300", 
+      freeLimit: 3 
+    };
     setSections(sections.map(s => s.id === secId ? { ...s, items: [...s.items, newItem] } : s));
   };
 
@@ -97,6 +102,19 @@ export default function AdminPanel() {
       const updatedItems = s.items.map(i => i.id === itemId ? { ...i, [field]: value } : i);
       return { ...s, items: updatedItems };
     }));
+  };
+
+  // Upload da imagem do produto direto do dispositivo
+  const handleProductImageUpload = (secId, itemId, e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64Image = reader.result;
+      updateItemInSec(secId, itemId, 'image', base64Image);
+    };
+    reader.readAsDataURL(file);
   };
 
   const addTopping = () => {
@@ -202,7 +220,7 @@ export default function AdminPanel() {
       </div>
 
       <main className="max-w-4xl mx-auto px-4 mt-6">
-        {/* SEÇÕES */}
+        {/* SEÇÕES & PRODUTOS COM UPLOAD DE FOTO */}
         {activeTab === "sections" && (
           <div className="space-y-6">
             <div className="flex justify-between items-center flex-wrap gap-3">
@@ -227,10 +245,52 @@ export default function AdminPanel() {
                     <button onClick={() => addItemToSection(sec.id)} className="bg-orange-100 text-orange-700 font-bold text-xs px-3 py-1.5 rounded-lg">+ Produto</button>
                   </div>
                   {sec.items.map((item) => (
-                    <div key={item.id} className="flex gap-2 items-center bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                      <input type="text" value={item.name} onChange={(e) => updateItemInSec(sec.id, item.id, 'name', e.target.value)} className="flex-1 p-2 border rounded-lg text-sm font-bold bg-white" placeholder="Nome" />
-                      <input type="number" value={item.price} onChange={(e) => updateItemInSec(sec.id, item.id, 'price', Number(e.target.value))} className="w-24 p-2 border rounded-lg text-sm font-bold text-orange-600 bg-white" placeholder="Preço" />
-                      <button onClick={() => removeItemFromSection(sec.id, item.id)} className="bg-red-100 text-red-600 p-2 rounded-lg font-bold text-xs">🗑️</button>
+                    <div key={item.id} className="flex gap-2 items-center bg-slate-50 p-3 rounded-xl border border-slate-100 flex-wrap sm:flex-nowrap">
+                      
+                      {/* BOTÃO PARA ADICIONAR / ALTERAR FOTO DO PRODUTO */}
+                      <label className="w-14 h-14 bg-white rounded-xl overflow-hidden shrink-0 cursor-pointer relative group flex items-center justify-center border-2 border-dashed border-orange-300 shadow-sm">
+                        {item.image ? (
+                          <img src={item.image} alt="Produto" className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-[10px] text-orange-600 font-bold text-center px-1">Foto 📷</span>
+                        )}
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[9px] font-bold transition-opacity">
+                          Alterar
+                        </div>
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden" 
+                          onChange={(e) => handleProductImageUpload(sec.id, item.id, e)} 
+                        />
+                      </label>
+
+                      <div className="flex-1 flex flex-col gap-1 w-full">
+                        <input 
+                          type="text" 
+                          value={item.name} 
+                          onChange={(e) => updateItemInSec(sec.id, item.id, 'name', e.target.value)} 
+                          className="w-full p-2 border rounded-lg text-sm font-bold bg-white text-slate-800" 
+                          placeholder="Nome do Produto"
+                        />
+                        <input 
+                          type="text" 
+                          value={item.description || ""} 
+                          onChange={(e) => updateItemInSec(sec.id, item.id, 'description', e.target.value)} 
+                          className="w-full p-1.5 border rounded-lg text-xs bg-white text-slate-500" 
+                          placeholder="Descrição (ex: Açaí, Ninho, Morango)"
+                        />
+                      </div>
+
+                      <input 
+                        type="number" 
+                        value={item.price} 
+                        onChange={(e) => updateItemInSec(sec.id, item.id, 'price', Number(e.target.value))} 
+                        className="w-24 p-2 border rounded-lg text-sm font-bold text-orange-600 bg-white text-center" 
+                        placeholder="Preço"
+                      />
+
+                      <button onClick={() => removeItemFromSection(sec.id, item.id)} className="bg-red-100 text-red-600 p-2.5 rounded-xl font-bold text-xs hover:bg-red-200">🗑️</button>
                     </div>
                   ))}
                 </div>
