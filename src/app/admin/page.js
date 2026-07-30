@@ -60,7 +60,7 @@ export default function AdminPanel() {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (usernameInput === "pedacinho da felicidade admin" && passwordInput === "pedacinho admin 1 2 3") {
+    if (usernameInput === "pedacinhodafelicidadeadmin" && passwordInput === "pedacinhoadmin123") {
       setIsAuthenticated(true);
       sessionStorage.setItem("admin_logged", "true");
       setLoginError(false);
