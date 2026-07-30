@@ -60,7 +60,7 @@ const DEFAULT_TOPPINGS = [
 
 const DELIVERY_FEE = 5.0; 
 const MINIMUM_ORDER = 20.0; 
-const PIX_KEY = "suachave@pix.com.br"; 
+const PIX_KEY = "74999580828"; 
 
 export default function PedacinhoDeFelicidade() {
   const [cart, setCart] = useState([]);
