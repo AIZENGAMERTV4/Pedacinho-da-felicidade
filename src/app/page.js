@@ -54,11 +54,9 @@ export default function PedacinhoDeFelicidade() {
 
   useEffect(() => {
     async function loadDataFromSupabase() {
-      // Carregar seções
       const { data: secData } = await supabase.from('store_config').select('value').eq('key', 'sections').single();
       if (secData && secData.value) setSections(secData.value);
 
-      // Carregar adicionais
       const { data: topData } = await supabase.from('store_config').select('value').eq('key', 'toppings').single();
       if (topData && topData.value) setToppings(topData.value);
     }
@@ -167,7 +165,6 @@ export default function PedacinhoDeFelicidade() {
       deliveryPhoto: null
     };
     
-    // Salvar no Supabase para o Admin ver na hora
     await supabase.from('orders').upsert({ id: orderId, order_data: newOrder });
 
     const updatedHistory = [newOrder, ...orderHistory];
@@ -277,7 +274,6 @@ export default function PedacinhoDeFelicidade() {
         </div>
       </header>
 
-      {/* RENDERIZAÇÃO DAS SEÇÕES */}
       {sections.map((sec) => {
         if (!sec.items || sec.items.length === 0) return null;
         if (sec.layout === 'carousel') {

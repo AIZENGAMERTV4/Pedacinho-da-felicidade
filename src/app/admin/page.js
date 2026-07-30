@@ -3,6 +3,30 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 
+const DEFAULT_SECTIONS = [
+  {
+    id: "sec_queridinhos",
+    title: "Os Queridinhos 😍",
+    layout: "carousel",
+    items: [
+      { id: "p1", name: "Explosão de Alegria", description: "Açaí, Leite Ninho, Morango fresco e Leite Condensado", price: 22.0, image: "https://images.unsplash.com/photo-1590137876181-2a5a7e340308?auto=format&fit=crop&q=80&w=600", tag: "Mais Vendido", tagColor: "bg-orange-500", borderColor: "border-orange-500", freeLimit: 3 },
+      { id: "p2", name: "Especial Luiza", description: "Açaí, Nutella na borda, pedaços de Brownie e Morango", price: 28.0, image: "https://images.unsplash.com/photo-1626074353765-517a681e40be?auto=format&fit=crop&q=80&w=600", tag: "Nossa Especialidade", tagColor: "bg-pink-500", borderColor: "border-pink-500", freeLimit: 3 },
+      { id: "p3", name: "Taça Céu Azul", description: "Açaí, Creme de Cupuaçu, Banana, Kiwi e Granola", price: 24.0, image: "https://images.unsplash.com/photo-1579954115545-a95591f28bfc?auto=format&fit=crop&q=80&w=600", tag: "Refrescante", tagColor: "bg-blue-500", borderColor: "border-blue-500", freeLimit: 3 }
+    ]
+  }
+];
+
+const DEFAULT_TOPPINGS = [
+  { id: "t1", name: "Leite Ninho", price: 0, premium: false },
+  { id: "t2", name: "Granola Crocante", price: 0, premium: false },
+  { id: "t3", name: "Morango", price: 0, premium: false },
+  { id: "t4", name: "Banana", price: 0, premium: false },
+  { id: "t5", name: "Paçoca", price: 0, premium: false },
+  { id: "t6", name: "Leite Condensado", price: 0, premium: false },
+  { id: "t7", name: "Nutella Extra", price: 4.0, premium: true },
+  { id: "t8", name: "Ouro Branco", price: 3.0, premium: true },
+];
+
 export default function AdminPanel() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [usernameInput, setUsernameInput] = useState("");
@@ -11,8 +35,8 @@ export default function AdminPanel() {
 
   const [activeTab, setActiveTab] = useState("sections"); // "sections", "toppings", "orders"
 
-  const [sections, setSections] = useState([]);
-  const [toppings, setToppings] = useState([]);
+  const [sections, setSections] = useState(DEFAULT_SECTIONS);
+  const [toppings, setToppings] = useState(DEFAULT_TOPPINGS);
   const [orders, setOrders] = useState([]);
   const [modalImage, setModalImage] = useState(null);
 
@@ -21,15 +45,12 @@ export default function AdminPanel() {
     if (isLogged === "true") setIsAuthenticated(true);
 
     async function loadAdminData() {
-      // Carregar seções do Supabase
       const { data: secData } = await supabase.from('store_config').select('value').eq('key', 'sections').single();
       if (secData && secData.value) setSections(secData.value);
 
-      // Carregar adicionais do Supabase
       const { data: topData } = await supabase.from('store_config').select('value').eq('key', 'toppings').single();
       if (topData && topData.value) setToppings(topData.value);
 
-      // Carregar pedidos do Supabase
       const { data: orderData } = await supabase.from('orders').select('*');
       if (orderData) {
         const formattedOrders = orderData.map(o => o.order_data);
@@ -57,9 +78,14 @@ export default function AdminPanel() {
   };
 
   const saveAllChanges = async () => {
-    await supabase.from('store_config').upsert({ key: 'sections', value: sections });
-    await supabase.from('store_config').upsert({ key: 'toppings', value: toppings });
-    alert("Alterações salvas na nuvem com sucesso! A loja inteira foi atualizada.");
+    const { error: err1 } = await supabase.from('store_config').upsert({ key: 'sections', value: sections });
+    const { error: err2 } = await supabase.from('store_config').upsert({ key: 'toppings', value: toppings });
+
+    if (err1 || err2) {
+      alert("Erro ao salvar no Supabase: " + (err1?.message || err2?.message));
+    } else {
+      alert("Alterações salvas na nuvem com sucesso! A loja inteira foi atualizada.");
+    }
   };
 
   const addNewSection = () => {
@@ -104,7 +130,6 @@ export default function AdminPanel() {
     }));
   };
 
-  // Upload da imagem do produto direto do dispositivo
   const handleProductImageUpload = (secId, itemId, e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -220,7 +245,7 @@ export default function AdminPanel() {
       </div>
 
       <main className="max-w-4xl mx-auto px-4 mt-6">
-        {/* SEÇÕES & PRODUTOS COM UPLOAD DE FOTO */}
+        {/* SEÇÕES & PRODUTOS */}
         {activeTab === "sections" && (
           <div className="space-y-6">
             <div className="flex justify-between items-center flex-wrap gap-3">
@@ -247,7 +272,7 @@ export default function AdminPanel() {
                   {sec.items.map((item) => (
                     <div key={item.id} className="flex gap-2 items-center bg-slate-50 p-3 rounded-xl border border-slate-100 flex-wrap sm:flex-nowrap">
                       
-                      {/* BOTÃO PARA ADICIONAR / ALTERAR FOTO DO PRODUTO */}
+                      {/* FOTO DO PRODUTO */}
                       <label className="w-14 h-14 bg-white rounded-xl overflow-hidden shrink-0 cursor-pointer relative group flex items-center justify-center border-2 border-dashed border-orange-300 shadow-sm">
                         {item.image ? (
                           <img src={item.image} alt="Produto" className="w-full h-full object-cover" />
@@ -278,7 +303,7 @@ export default function AdminPanel() {
                           value={item.description || ""} 
                           onChange={(e) => updateItemInSec(sec.id, item.id, 'description', e.target.value)} 
                           className="w-full p-1.5 border rounded-lg text-xs bg-white text-slate-500" 
-                          placeholder="Descrição (ex: Açaí, Ninho, Morango)"
+                          placeholder="Descrição"
                         />
                       </div>
 
