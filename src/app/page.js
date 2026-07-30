@@ -29,7 +29,7 @@ const DEFAULT_TOPPINGS = [
 
 const DELIVERY_FEE = 5.0; 
 const MINIMUM_ORDER = 20.0; 
-const PIX_KEY = "suachave@pix.com.br"; 
+const PIX_KEY = "74999580828"; 
 
 export default function PedacinhoDeFelicidade() {
   const [cart, setCart] = useState([]);
@@ -193,7 +193,7 @@ export default function PedacinhoDeFelicidade() {
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
 
-        <img src="/IMG-20260730-WA0114.jpg" alt="Logo" className="w-48 object-contain mb-8 mix-blend-multiply" />
+        <img src="/pedacinhadafelicidade.jpg" alt="Logo" className="w-48 object-contain mb-8 mix-blend-multiply" />
         <div className="bg-white w-full max-w-md rounded-3xl shadow-xl p-6 border border-orange-100 relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-pink-500 via-orange-500 to-green-500"></div>
           <h2 className="text-2xl font-black text-orange-950 text-center mt-2 mb-1">Pedido #{activeOrder.id}</h2>
@@ -253,7 +253,7 @@ export default function PedacinhoDeFelicidade() {
         </button>
 
         <div className="relative z-10 flex flex-col items-center w-full mt-2">
-          <img src="/IMG-20260730-WA0114.jpg" alt="Logo" className="w-56 h-20 sm:w-64 sm:h-24 object-cover object-center drop-shadow-sm mix-blend-multiply" />
+          <img src="/pedacinhadafelicidade.jpg" alt="Logo" className="w-56 h-20 sm:w-64 sm:h-24 object-cover object-center drop-shadow-sm mix-blend-multiply" />
           <p className="text-orange-600 font-bold text-sm -mt-1 mb-3">Sua dose diária de alegria 💜</p>
           
           <div className="flex flex-col items-center gap-1.5">
