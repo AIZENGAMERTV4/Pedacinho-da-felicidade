@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 
 export default function AdminPanel() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -13,54 +14,36 @@ export default function AdminPanel() {
   const [sections, setSections] = useState([]);
   const [toppings, setToppings] = useState([]);
   const [orders, setOrders] = useState([]);
-
-  // Modal para ver a foto em tamanho maior
   const [modalImage, setModalImage] = useState(null);
 
   useEffect(() => {
     const isLogged = sessionStorage.getItem("admin_logged");
     if (isLogged === "true") setIsAuthenticated(true);
 
-    if (localStorage.getItem("admin_sections")) {
-      setSections(JSON.parse(localStorage.getItem("admin_sections")));
-    } else {
-      setSections([
-        {
-          id: "sec_queridinhos",
-          title: "Os Queridinhos 😍",
-          layout: "carousel",
-          items: [
-            { id: "p1", name: "Explosão de Alegria", description: "Açaí, Leite Ninho, Morango fresco e Leite Condensado", price: 22.0, image: "https://images.unsplash.com/photo-1590137876181-2a5a7e340308?auto=format&fit=crop&q=80&w=600", freeLimit: 3 },
-            { id: "p2", name: "Especial Luiza", description: "Açaí, Nutella na borda, pedaços de Brownie e Morango", price: 28.0, image: "https://images.unsplash.com/photo-1626074353765-517a681e40be?auto=format&fit=crop&q=80&w=600", freeLimit: 3 },
-            { id: "p3", name: "Taça Céu Azul", description: "Açaí, Creme de Cupuaçu, Banana, Kiwi e Granola", price: 24.0, image: "https://images.unsplash.com/photo-1579954115545-a95591f28bfc?auto=format&fit=crop&q=80&w=600", freeLimit: 3 }
-          ]
-        }
-      ]);
-    }
+    async function loadAdminData() {
+      // Carregar seções do Supabase
+      const { data: secData } = await supabase.from('store_config').select('value').eq('key', 'sections').single();
+      if (secData && secData.value) setSections(secData.value);
 
-    if (localStorage.getItem("admin_toppings")) {
-      setToppings(JSON.parse(localStorage.getItem("admin_toppings")));
-    } else {
-      setToppings([
-        { id: "t1", name: "Leite Ninho", price: 0, premium: false },
-        { id: "t2", name: "Granola Crocante", price: 0, premium: false },
-        { id: "t3", name: "Morango", price: 0, premium: false },
-        { id: "t4", name: "Banana", price: 0, premium: false },
-        { id: "t5", name: "Paçoca", price: 0, premium: false },
-        { id: "t6", name: "Leite Condensado", price: 0, premium: false },
-        { id: "t7", name: "Nutella Extra", price: 4.0, premium: true },
-        { id: "t8", name: "Ouro Branco", price: 3.0, premium: true },
-      ]);
-    }
+      // Carregar adicionais do Supabase
+      const { data: topData } = await supabase.from('store_config').select('value').eq('key', 'toppings').single();
+      if (topData && topData.value) setToppings(topData.value);
 
-    if (localStorage.getItem("pedacinho_orders")) {
-      setOrders(JSON.parse(localStorage.getItem("pedacinho_orders")));
+      // Carregar pedidos do Supabase
+      const { data: orderData } = await supabase.from('orders').select('*');
+      if (orderData) {
+        const formattedOrders = orderData.map(o => o.order_data);
+        // Ordenar por ID decrescente para os mais novos ficarem em cima
+        formattedOrders.sort((a, b) => b.id - a.id);
+        setOrders(formattedOrders);
+      }
     }
+    loadAdminData();
   }, []);
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (usernameInput === "pedacinhodafelicidadeadmin" && passwordInput === "pedacinhoadmin123") {
+    if (usernameInput === "pedacinho da felicidade admin" && passwordInput === "pedacinho admin 1 2 3") {
       setIsAuthenticated(true);
       sessionStorage.setItem("admin_logged", "true");
       setLoginError(false);
@@ -74,10 +57,11 @@ export default function AdminPanel() {
     sessionStorage.removeItem("admin_logged");
   };
 
-  const saveAllChanges = () => {
-    localStorage.setItem("admin_sections", JSON.stringify(sections));
-    localStorage.setItem("admin_toppings", JSON.stringify(toppings));
-    alert("Alterações salvas com sucesso! A loja foi atualizada.");
+  const saveAllChanges = async () => {
+    // Salvar no Supabase (nuvem)
+    await supabase.from('store_config').upsert({ key: 'sections', value: sections });
+    await supabase.from('store_config').upsert({ key: 'toppings', value: toppings });
+    alert("Alterações salvas na nuvem com sucesso! A loja inteira foi atualizada para todos os clientes.");
   };
 
   const addNewSection = () => {
@@ -127,10 +111,13 @@ export default function AdminPanel() {
     setToppings(toppings.map(t => t.id === id ? { ...t, [field]: value } : t));
   };
 
-  const updateOrderStatus = (orderId, newStatus) => {
+  const updateOrderStatus = async (orderId, newStatus) => {
     const updated = orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o);
     setOrders(updated);
-    localStorage.setItem("pedacinho_orders", JSON.stringify(updated));
+    const targetOrder = updated.find(o => o.id === orderId);
+    if (targetOrder) {
+      await supabase.from('orders').upsert({ id: orderId.toString(), order_data: targetOrder });
+    }
   };
 
   const handleDeliveryPhotoUpload = (orderId, e) => {
@@ -138,11 +125,14 @@ export default function AdminPanel() {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onloadend = () => {
+    reader.onloadend = async () => {
       const base64Image = reader.result;
       const updated = orders.map(o => o.id === orderId ? { ...o, deliveryPhoto: base64Image, status: 'finalizado' } : o);
       setOrders(updated);
-      localStorage.setItem("pedacinho_orders", JSON.stringify(updated));
+      const targetOrder = updated.find(o => o.id === orderId);
+      if (targetOrder) {
+        await supabase.from('orders').upsert({ id: orderId.toString(), order_data: targetOrder });
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -181,8 +171,6 @@ export default function AdminPanel() {
 
   return (
     <div className="min-h-screen bg-slate-100 pb-20 font-sans relative">
-      
-      {/* MODAL PARA ZOOM NA FOTO DO COMPROVANTE OU ENTREGA */}
       {modalImage && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl p-4 max-w-lg w-full flex flex-col items-center relative shadow-2xl">
@@ -196,7 +184,7 @@ export default function AdminPanel() {
       <header className="bg-slate-900 text-white px-6 py-4 flex justify-between items-center shadow-md">
         <div>
           <h1 className="text-xl font-black">Painel Administrativo 🛠️</h1>
-          <p className="text-xs text-slate-400">Um Pedacinho de Felicidade</p>
+          <p className="text-xs text-slate-400">Um Pedacinho de Felicidade (Supabase Cloud)</p>
         </div>
         <div className="flex items-center gap-3">
           <a href="/" target="_blank" className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-3 py-2 rounded-xl">Ver Loja 🛍️</a>
@@ -219,7 +207,7 @@ export default function AdminPanel() {
           <div className="space-y-6">
             <div className="flex justify-between items-center flex-wrap gap-3">
               <button onClick={addNewSection} className="bg-orange-500 hover:bg-orange-600 text-white font-bold px-4 py-2.5 rounded-xl shadow text-xs">+ Nova Seção</button>
-              <button onClick={saveAllChanges} className="bg-green-600 hover:bg-green-700 text-white font-black px-6 py-2.5 rounded-xl shadow text-xs">Salvar Alterações 💾</button>
+              <button onClick={saveAllChanges} className="bg-green-600 hover:bg-green-700 text-white font-black px-6 py-2.5 rounded-xl shadow text-xs">Salvar Alterações na Nuvem 💾</button>
             </div>
 
             {sections.map((sec) => (
@@ -258,7 +246,7 @@ export default function AdminPanel() {
               <h2 className="text-lg font-black text-slate-800">Gerenciar Adicionais</h2>
               <div className="flex gap-2">
                 <button onClick={addTopping} className="bg-orange-500 text-white font-bold px-4 py-2.5 rounded-xl shadow text-xs">+ Adicional</button>
-                <button onClick={saveAllChanges} className="bg-green-600 text-white font-black px-6 py-2.5 rounded-xl shadow text-xs">Salvar 💾</button>
+                <button onClick={saveAllChanges} className="bg-green-600 text-white font-black px-6 py-2.5 rounded-xl shadow text-xs">Salvar na Nuvem 💾</button>
               </div>
             </div>
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-4">
@@ -276,12 +264,12 @@ export default function AdminPanel() {
           </div>
         )}
 
-        {/* PEDIDOS COM COMPROVANTE PIX E FOTO DA CASA */}
+        {/* PEDIDOS */}
         {activeTab === "orders" && (
           <div className="space-y-6">
-            <h2 className="text-lg font-black text-slate-800">Gerenciamento de Pedidos em Tempo Real</h2>
+            <h2 className="text-lg font-black text-slate-800">Gerenciamento de Pedidos (Tempo Real)</h2>
             {orders.length === 0 ? (
-              <div className="bg-white rounded-2xl p-10 text-center text-slate-500 font-bold border border-slate-200">Nenhum pedido recebido ainda.</div>
+              <div className="bg-white rounded-2xl p-10 text-center text-slate-500 font-bold border border-slate-200">Nenhum pedido recebido na nuvem ainda.</div>
             ) : (
               <div className="space-y-4">
                 {orders.map((order) => (
@@ -311,14 +299,13 @@ export default function AdminPanel() {
                       </div>
                     </div>
 
-                    {/* BOTÃO PARA VER O COMPROVANTE PIX ENVIADO */}
                     <div className="pl-2 flex gap-4 items-center flex-wrap">
                       {order.pixReceipt ? (
                         <button onClick={() => setModalImage(order.pixReceipt)} className="bg-teal-50 border border-teal-200 text-teal-700 px-3 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 hover:bg-teal-100 transition-colors">
                           <span>🧾 Ver Comprovante Pix</span>
                         </button>
                       ) : (
-                        <span className="text-xs text-slate-400 italic">Nenhum comprovante anexado (Pagamento na entrega)</span>
+                        <span className="text-xs text-slate-400 italic">Nenhum comprovante anexado</span>
                       )}
 
                       {order.deliveryPhoto && (
@@ -328,7 +315,6 @@ export default function AdminPanel() {
                       )}
                     </div>
 
-                    {/* BOTÕES DE PROGRESSÃO */}
                     <div className="pl-2 flex flex-col sm:flex-row gap-2 pt-2 border-t border-slate-100 items-center">
                       <div className="flex gap-1 flex-1 w-full">
                         <button onClick={() => updateOrderStatus(order.id, 'aguardando')} className={`flex-1 py-2 rounded-lg font-bold text-xs ${order.status === 'aguardando' ? 'bg-orange-500 text-white shadow' : 'bg-slate-100 text-slate-600'}`}>1. Aguardando</button>

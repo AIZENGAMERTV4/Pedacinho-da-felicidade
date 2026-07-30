@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 
 const DEFAULT_SECTIONS = [
   {
@@ -11,18 +12,6 @@ const DEFAULT_SECTIONS = [
       { id: "p1", name: "Explosão de Alegria", description: "Açaí, Leite Ninho, Morango fresco e Leite Condensado", price: 22.0, image: "https://images.unsplash.com/photo-1590137876181-2a5a7e340308?auto=format&fit=crop&q=80&w=600", tag: "Mais Vendido", tagColor: "bg-orange-500", borderColor: "border-orange-500", freeLimit: 3 },
       { id: "p2", name: "Especial Luiza", description: "Açaí, Nutella na borda, pedaços de Brownie e Morango", price: 28.0, image: "https://images.unsplash.com/photo-1626074353765-517a681e40be?auto=format&fit=crop&q=80&w=600", tag: "Nossa Especialidade", tagColor: "bg-pink-500", borderColor: "border-pink-500", freeLimit: 3 },
       { id: "p3", name: "Taça Céu Azul", description: "Açaí, Creme de Cupuaçu, Banana, Kiwi e Granola", price: 24.0, image: "https://images.unsplash.com/photo-1579954115545-a95591f28bfc?auto=format&fit=crop&q=80&w=600", tag: "Refrescante", tagColor: "bg-blue-500", borderColor: "border-blue-500", freeLimit: 3 }
-    ]
-  },
-  {
-    id: "sec_monte",
-    title: "Monte do Seu Jeito 🎨",
-    layout: "vertical",
-    items: [
-      { id: "m240", name: "Açaí Tradicional - 240ml", description: "Com 3 acompanhamentos", price: 12.0, image: "https://images.unsplash.com/photo-1590137876181-2a5a7e340308?auto=format&fit=crop&q=80&w=300", freeLimit: 3 },
-      { id: "m300", name: "Açaí Tradicional - 300ml", description: "Com 4 acompanhamentos", price: 17.0, image: "https://images.unsplash.com/photo-1579954115545-a95591f28bfc?auto=format&fit=crop&q=80&w=300", freeLimit: 4 },
-      { id: "m500", name: "Açaí Tradicional - 500ml", description: "Com 5 acompanhamentos", price: 20.0, image: "https://images.unsplash.com/photo-1626074353765-517a681e40be?auto=format&fit=crop&q=80&w=300", freeLimit: 5 },
-      { id: "m700", name: "Açaí Tradicional - 700ml", description: "Com 6 acompanhamentos", price: 28.0, image: "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&q=80&w=300", freeLimit: 6 },
-      { id: "m900", name: "Marmita 900ml", description: "Com direito a 10 acompanhamentos", price: 40.0, image: "https://images.unsplash.com/photo-1550461716-ba42023d83b1?auto=format&fit=crop&q=80&w=300", freeLimit: 10 }
     ]
   }
 ];
@@ -40,7 +29,7 @@ const DEFAULT_TOPPINGS = [
 
 const DELIVERY_FEE = 5.0; 
 const MINIMUM_ORDER = 20.0; 
-const PIX_KEY = "74999580828"; 
+const PIX_KEY = "suachave@pix.com.br"; 
 
 export default function PedacinhoDeFelicidade() {
   const [cart, setCart] = useState([]);
@@ -64,8 +53,16 @@ export default function PedacinhoDeFelicidade() {
   const [pixCopied, setPixCopied] = useState(false);
 
   useEffect(() => {
-    if (localStorage.getItem("admin_sections")) setSections(JSON.parse(localStorage.getItem("admin_sections")));
-    if (localStorage.getItem("admin_toppings")) setToppings(JSON.parse(localStorage.getItem("admin_toppings")));
+    async function loadDataFromSupabase() {
+      // Carregar seções
+      const { data: secData } = await supabase.from('store_config').select('value').eq('key', 'sections').single();
+      if (secData && secData.value) setSections(secData.value);
+
+      // Carregar adicionais
+      const { data: topData } = await supabase.from('store_config').select('value').eq('key', 'toppings').single();
+      if (topData && topData.value) setToppings(topData.value);
+    }
+    loadDataFromSupabase();
 
     const savedOrders = localStorage.getItem("pedacinho_orders");
     if (savedOrders) setOrderHistory(JSON.parse(savedOrders));
@@ -147,17 +144,18 @@ export default function PedacinhoDeFelicidade() {
   const submitReceipt = () => {
     if (!receiptFile) return;
     const reader = new FileReader();
-    reader.onloadend = () => {
+    reader.onloadend = async () => {
       const base64Receipt = reader.result;
       setIsPixScreenOpen(false);
-      createActiveOrder("aguardando", base64Receipt);
+      await createActiveOrder("aguardando", base64Receipt);
     };
     reader.readAsDataURL(receiptFile);
   };
 
-  const createActiveOrder = (status, receiptImage) => {
+  const createActiveOrder = async (status, receiptImage) => {
+    const orderId = Math.floor(Math.random() * 10000).toString();
     const newOrder = {
-      id: Math.floor(Math.random() * 10000), 
+      id: orderId, 
       date: new Date().toLocaleDateString('pt-BR') + ' às ' + new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}),
       items: [...cart],
       total: cartTotal,
@@ -169,6 +167,9 @@ export default function PedacinhoDeFelicidade() {
       deliveryPhoto: null
     };
     
+    // Salvar no Supabase para o Admin ver na hora
+    await supabase.from('orders').upsert({ id: orderId, order_data: newOrder });
+
     const updatedHistory = [newOrder, ...orderHistory];
     setOrderHistory(updatedHistory);
     localStorage.setItem("pedacinho_orders", JSON.stringify(updatedHistory));
@@ -192,7 +193,7 @@ export default function PedacinhoDeFelicidade() {
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
 
-        <img src="/pedacinhadafelicidade.jpg" alt="Logo" className="w-48 object-contain mb-8 mix-blend-multiply" />
+        <img src="/IMG-20260730-WA0114.jpg" alt="Logo" className="w-48 object-contain mb-8 mix-blend-multiply" />
         <div className="bg-white w-full max-w-md rounded-3xl shadow-xl p-6 border border-orange-100 relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-pink-500 via-orange-500 to-green-500"></div>
           <h2 className="text-2xl font-black text-orange-950 text-center mt-2 mb-1">Pedido #{activeOrder.id}</h2>
@@ -235,18 +236,6 @@ export default function PedacinhoDeFelicidade() {
               </div>
             </div>
           </div>
-
-          {activeOrder.status === 'finalizado' && (
-            <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-2xl text-center">
-              <p className="font-black text-green-700 text-sm">Pedido entregue e finalizado com sucesso! 🎉</p>
-              {activeOrder.deliveryPhoto && (
-                <div className="mt-3">
-                  <p className="text-xs font-bold text-slate-500 mb-1">Foto de comprovação da entrega:</p>
-                  <img src={activeOrder.deliveryPhoto} alt="Comprovação" className="w-full h-40 object-cover rounded-xl border border-green-300" />
-                </div>
-              )}
-            </div>
-          )}
         </div>
       </div>
     );
@@ -264,7 +253,7 @@ export default function PedacinhoDeFelicidade() {
         </button>
 
         <div className="relative z-10 flex flex-col items-center w-full mt-2">
-          <img src="/pedacinhadafelicidade.jpg" alt="Logo" className="w-56 h-20 sm:w-64 sm:h-24 object-cover object-center drop-shadow-sm mix-blend-multiply" />
+          <img src="/IMG-20260730-WA0114.jpg" alt="Logo" className="w-56 h-20 sm:w-64 sm:h-24 object-cover object-center drop-shadow-sm mix-blend-multiply" />
           <p className="text-orange-600 font-bold text-sm -mt-1 mb-3">Sua dose diária de alegria 💜</p>
           
           <div className="flex flex-col items-center gap-1.5">
@@ -288,7 +277,7 @@ export default function PedacinhoDeFelicidade() {
         </div>
       </header>
 
-      {/* SEÇÕES */}
+      {/* RENDERIZAÇÃO DAS SEÇÕES */}
       {sections.map((sec) => {
         if (!sec.items || sec.items.length === 0) return null;
         if (sec.layout === 'carousel') {
@@ -483,7 +472,7 @@ export default function PedacinhoDeFelicidade() {
         </div>
       )}
 
-      {/* PIX SCREEN COM ANEXO OBRIGATÓRIO */}
+      {/* PIX SCREEN */}
       {isPixScreenOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6 flex flex-col items-center relative">
