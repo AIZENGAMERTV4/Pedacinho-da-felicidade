@@ -2,37 +2,52 @@
 
 import React, { useState, useEffect } from "react";
 
-// --- DADOS DOS COPOS PRONTOS ---
-const PRE_MADE = [
-  { id: "p1", name: "Explosão de Alegria", description: "Açaí, Leite Ninho, Morango fresco e Leite Condensado", price: 22.0, image: "https://images.unsplash.com/photo-1590137876181-2a5a7e340308?auto=format&fit=crop&q=80&w=600", tag: "Mais Vendido", tagColor: "bg-orange-500", borderColor: "border-orange-500", freeLimit: 3 },
-  { id: "p2", name: "Especial Luiza", description: "Açaí, Nutella na borda, pedaços de Brownie e Morango", price: 28.0, image: "https://images.unsplash.com/photo-1626074353765-517a681e40be?auto=format&fit=crop&q=80&w=600", tag: "Nossa Especialidade", tagColor: "bg-pink-500", borderColor: "border-pink-500", freeLimit: 3 },
-  { id: "p3", name: "Taça Céu Azul", description: "Açaí, Creme de Cupuaçu, Banana, Kiwi e Granola", price: 24.0, image: "https://images.unsplash.com/photo-1579954115545-a95591f28bfc?auto=format&fit=crop&q=80&w=600", tag: "Refrescante", tagColor: "bg-blue-500", borderColor: "border-blue-500", freeLimit: 3 },
+const DEFAULT_SECTIONS = [
+  {
+    id: "sec_queridinhos",
+    title: "Os Queridinhos 😍",
+    layout: "carousel",
+    items: [
+      { id: "p1", name: "Explosão de Alegria", description: "Açaí, Leite Ninho, Morango fresco e Leite Condensado", price: 22.0, image: "https://images.unsplash.com/photo-1590137876181-2a5a7e340308?auto=format&fit=crop&q=80&w=600", tag: "Mais Vendido", tagColor: "bg-orange-500", borderColor: "border-orange-500", freeLimit: 3 },
+      { id: "p2", name: "Especial Luiza", description: "Açaí, Nutella na borda, pedaços de Brownie e Morango", price: 28.0, image: "https://images.unsplash.com/photo-1626074353765-517a681e40be?auto=format&fit=crop&q=80&w=600", tag: "Nossa Especialidade", tagColor: "bg-pink-500", borderColor: "border-pink-500", freeLimit: 3 },
+      { id: "p3", name: "Taça Céu Azul", description: "Açaí, Creme de Cupuaçu, Banana, Kiwi e Granola", price: 24.0, image: "https://images.unsplash.com/photo-1579954115545-a95591f28bfc?auto=format&fit=crop&q=80&w=600", tag: "Refrescante", tagColor: "bg-blue-500", borderColor: "border-blue-500", freeLimit: 3 }
+    ]
+  },
+  {
+    id: "sec_monte",
+    title: "Monte do Seu Jeito 🎨",
+    layout: "vertical",
+    items: [
+      { id: "m240", name: "Açaí Tradicional - 240ml", description: "Com 3 acompanhamentos", price: 12.0, image: "https://images.unsplash.com/photo-1590137876181-2a5a7e340308?auto=format&fit=crop&q=80&w=300", freeLimit: 3 },
+      { id: "m300", name: "Açaí Tradicional - 300ml", description: "Com 4 acompanhamentos", price: 17.0, image: "https://images.unsplash.com/photo-1579954115545-a95591f28bfc?auto=format&fit=crop&q=80&w=300", freeLimit: 4 },
+      { id: "m500", name: "Açaí Tradicional - 500ml", description: "Com 5 acompanhamentos", price: 20.0, image: "https://images.unsplash.com/photo-1626074353765-517a681e40be?auto=format&fit=crop&q=80&w=300", freeLimit: 5 },
+      { id: "m700", name: "Açaí Tradicional - 700ml", description: "Com 6 acompanhamentos", price: 28.0, image: "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&q=80&w=300", freeLimit: 6 },
+      { id: "m900", name: "Marmita 900ml", description: "Com direito a 10 acompanhamentos", price: 40.0, image: "https://images.unsplash.com/photo-1550461716-ba42023d83b1?auto=format&fit=crop&q=80&w=300", freeLimit: 10 }
+    ]
+  },
+  {
+    id: "sec_camadinhas",
+    title: "Camadinhas no Copo 🍨",
+    layout: "vertical",
+    items: [
+      { id: "cm300", name: "Camadinha - 300ml", description: "Açaí e creme em camadas perfeitas. Com 4 acompanhamentos", price: 19.0, image: "https://images.unsplash.com/photo-1579954115545-a95591f28bfc?auto=format&fit=crop&q=80&w=300", freeLimit: 4 },
+      { id: "cm500", name: "Camadinha - 500ml", description: "Açaí e creme em camadas perfeitas. Com 5 acompanhamentos", price: 24.0, image: "https://images.unsplash.com/photo-1626074353765-517a681e40be?auto=format&fit=crop&q=80&w=300", freeLimit: 5 },
+      { id: "cm700", name: "Camadinha - 700ml", description: "Açaí e creme em camadas perfeitas. Com 6 acompanhamentos", price: 32.0, image: "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&q=80&w=300", freeLimit: 6 }
+    ]
+  },
+  {
+    id: "sec_casadinho",
+    title: "Casadinho 🤝",
+    layout: "vertical",
+    items: [
+      { id: "cs300", name: "Casadinho - 300ml", description: "Metade Açaí, metade Cupuaçu. Com 4 acompanhamentos", price: 18.0, image: "https://images.unsplash.com/photo-1579954115545-a95591f28bfc?auto=format&fit=crop&q=80&w=300", freeLimit: 4 },
+      { id: "cs500", name: "Casadinho - 500ml", description: "Metade Açaí, metade Cupuaçu. Com 5 acompanhamentos", price: 22.0, image: "https://images.unsplash.com/photo-1626074353765-517a681e40be?auto=format&fit=crop&q=80&w=300", freeLimit: 5 },
+      { id: "cs700", name: "Casadinho - 700ml", description: "Metade Açaí, metade Cupuaçu. Com 6 acompanhamentos", price: 30.0, image: "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&q=80&w=300", freeLimit: 6 }
+    ]
+  }
 ];
 
-// --- 1. MONTE DO SEU JEITO ---
-const MONTE_SEU_JEITO = [
-  { id: "m240", name: "Açaí Tradicional - 240ml", description: "Com 3 acompanhamentos", price: 12.0, image: "https://images.unsplash.com/photo-1590137876181-2a5a7e340308?auto=format&fit=crop&q=80&w=300", freeLimit: 3 },
-  { id: "m300", name: "Açaí Tradicional - 300ml", description: "Com 4 acompanhamentos", price: 17.0, image: "https://images.unsplash.com/photo-1579954115545-a95591f28bfc?auto=format&fit=crop&q=80&w=300", freeLimit: 4 },
-  { id: "m500", name: "Açaí Tradicional - 500ml", description: "Com 5 acompanhamentos", price: 20.0, image: "https://images.unsplash.com/photo-1626074353765-517a681e40be?auto=format&fit=crop&q=80&w=300", freeLimit: 5 },
-  { id: "m700", name: "Açaí Tradicional - 700ml", description: "Com 6 acompanhamentos", price: 28.0, image: "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&q=80&w=300", freeLimit: 6 },
-  { id: "m900", name: "Marmita 900ml", description: "Com direito a 10 acompanhamentos", price: 40.0, image: "https://images.unsplash.com/photo-1550461716-ba42023d83b1?auto=format&fit=crop&q=80&w=300", freeLimit: 10 },
-];
-
-// --- 2. CAMADINHAS NO COPO ---
-const CAMADINHAS = [
-  { id: "cm300", name: "Camadinha - 300ml", description: "Açaí e creme em camadas perfeitas. Com 4 acompanhamentos", price: 19.0, image: "https://images.unsplash.com/photo-1579954115545-a95591f28bfc?auto=format&fit=crop&q=80&w=300", freeLimit: 4 },
-  { id: "cm500", name: "Camadinha - 500ml", description: "Açaí e creme em camadas perfeitas. Com 5 acompanhamentos", price: 24.0, image: "https://images.unsplash.com/photo-1626074353765-517a681e40be?auto=format&fit=crop&q=80&w=300", freeLimit: 5 },
-  { id: "cm700", name: "Camadinha - 700ml", description: "Açaí e creme em camadas perfeitas. Com 6 acompanhamentos", price: 32.0, image: "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&q=80&w=300", freeLimit: 6 },
-];
-
-// --- 3. CASADINHO ---
-const CASADINHOS = [
-  { id: "cs300", name: "Casadinho - 300ml", description: "Metade Açaí, metade Cupuaçu. Com 4 acompanhamentos", price: 18.0, image: "https://images.unsplash.com/photo-1579954115545-a95591f28bfc?auto=format&fit=crop&q=80&w=300", freeLimit: 4 },
-  { id: "cs500", name: "Casadinho - 500ml", description: "Metade Açaí, metade Cupuaçu. Com 5 acompanhamentos", price: 22.0, image: "https://images.unsplash.com/photo-1626074353765-517a681e40be?auto=format&fit=crop&q=80&w=300", freeLimit: 5 },
-  { id: "cs700", name: "Casadinho - 700ml", description: "Metade Açaí, metade Cupuaçu. Com 6 acompanhamentos", price: 30.0, image: "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&q=80&w=300", freeLimit: 6 },
-];
-
-const TOPPINGS = [
+const DEFAULT_TOPPINGS = [
   { id: "t1", name: "Leite Ninho", price: 0, premium: false },
   { id: "t2", name: "Granola Crocante", price: 0, premium: false },
   { id: "t3", name: "Morango", price: 0, premium: false },
@@ -53,44 +68,38 @@ export default function PedacinhoDeFelicidade() {
   const [buildingItem, setBuildingItem] = useState(null);
   const [selectedToppings, setSelectedToppings] = useState([]);
 
-  // Telas modais
+  const [sections, setSections] = useState(DEFAULT_SECTIONS);
+  const [toppings, setToppings] = useState(DEFAULT_TOPPINGS);
+
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isPixScreenOpen, setIsPixScreenOpen] = useState(false);
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false); // NOVO: Controle da tela de Histórico
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [activeOrder, setActiveOrder] = useState(null); 
-
-  // Histórico de Pedidos (Salvo no navegador do cliente)
   const [orderHistory, setOrderHistory] = useState([]);
 
-  // Formulário
   const [customerName, setCustomerName] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Pix");
   const [receiptFile, setReceiptFile] = useState(null);
   const [pixCopied, setPixCopied] = useState(false);
 
-  // --- INICIALIZAÇÃO E VERIFICAÇÃO DE HORÁRIO ---
   useEffect(() => {
-    // Carrega o histórico salvo no celular do cliente
+    if (localStorage.getItem("admin_sections")) setSections(JSON.parse(localStorage.getItem("admin_sections")));
+    if (localStorage.getItem("admin_toppings")) setToppings(JSON.parse(localStorage.getItem("admin_toppings")));
+
     const savedOrders = localStorage.getItem("pedacinho_orders");
-    if (savedOrders) {
-      setOrderHistory(JSON.parse(savedOrders));
-    }
+    if (savedOrders) setOrderHistory(JSON.parse(savedOrders));
 
     const checkStatus = () => {
       const now = new Date();
       const currentTime = now.getHours() * 60 + now.getMinutes(); 
-      const openTime = 13 * 60 + 30; // 13:30
-      const closeTime = 21 * 60 + 59; // 21:59
-      setIsOpen(currentTime >= openTime && currentTime <= closeTime);
+      setIsOpen(currentTime >= (13 * 60 + 30) && currentTime <= (21 * 60 + 59));
     };
-    
     checkStatus(); 
     const interval = setInterval(checkStatus, 60000); 
     return () => clearInterval(interval);
   }, []);
 
-  // --- LÓGICA DE ACOMPANHAMENTOS ---
   const openBuilder = (item) => {
     if (!isOpen) {
       alert("Poxa! Estamos fechados no momento. Nosso horário é das 13:30 às 21:59.");
@@ -117,7 +126,7 @@ export default function PedacinhoDeFelicidade() {
         total += t.price;
       } else {
         standardCount++;
-        if (standardCount > buildingItem.freeLimit) total += 2.0; 
+        if (standardCount > (buildingItem.freeLimit || 3)) total += 2.0; 
       }
     });
     return total;
@@ -129,14 +138,9 @@ export default function PedacinhoDeFelicidade() {
     setBuildingItem(null); 
   };
 
-  const removeFromCart = (cartId) => {
-    setCart(cart.filter((item) => item.cartId !== cartId));
-  };
-
   const cartSubtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const cartTotal = cartSubtotal > 0 ? cartSubtotal + DELIVERY_FEE : 0;
 
-  // --- FLUXO DE PAGAMENTO E HISTÓRICO ---
   const handleCheckoutSubmit = () => {
     if (cartSubtotal < MINIMUM_ORDER) {
       alert(`O pedido mínimo é de R$ ${MINIMUM_ORDER.toFixed(2).replace('.', ',')} (sem contar a entrega). Por favor, adicione mais itens!`);
@@ -171,26 +175,17 @@ export default function PedacinhoDeFelicidade() {
       date: new Date().toLocaleDateString('pt-BR') + ' às ' + new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}),
       items: [...cart],
       total: cartTotal,
-      status: status 
+      status: status,
+      customer: customerName,
+      address: customerAddress
     };
     
-    // Salva no Histórico
     const updatedHistory = [newOrder, ...orderHistory];
     setOrderHistory(updatedHistory);
     localStorage.setItem("pedacinho_orders", JSON.stringify(updatedHistory));
     
-    setActiveOrder(newOrder); // Abre a tela de acompanhamento
-    setCart([]); // Limpa o carrinho
-  };
-
-  // Atualiza o status do pedido também no histórico (Simula o admin mudando o status)
-  const updateActiveOrderStatus = (newStatus) => {
-    const updatedOrder = { ...activeOrder, status: newStatus };
-    setActiveOrder(updatedOrder);
-
-    const updatedHistory = orderHistory.map(o => o.id === activeOrder.id ? updatedOrder : o);
-    setOrderHistory(updatedHistory);
-    localStorage.setItem("pedacinho_orders", JSON.stringify(updatedHistory));
+    setActiveOrder(newOrder); 
+    setCart([]); 
   };
 
   const getStatusText = (status) => {
@@ -200,10 +195,6 @@ export default function PedacinhoDeFelicidade() {
     return status;
   };
 
-
-  // ==========================================
-  // TELA 1: ACOMPANHAMENTO DO PEDIDO ATIVO
-  // ==========================================
   if (activeOrder) {
     return (
       <div className="min-h-screen bg-orange-50 flex flex-col items-center pt-10 px-6 font-sans">
@@ -211,52 +202,38 @@ export default function PedacinhoDeFelicidade() {
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
 
-        <img src="/pedacinhadafelicidade.jpg" alt="Logo" className="w-48 object-contain mb-8 mix-blend-multiply" />
+        <img src="/IMG-20260730-WA0114.jpg" alt="Logo" className="w-48 object-contain mb-8 mix-blend-multiply" />
         <div className="bg-white w-full max-w-md rounded-3xl shadow-xl p-6 border border-orange-100 relative overflow-hidden">
           <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-pink-500 via-orange-500 to-yellow-500"></div>
           <h2 className="text-2xl font-black text-orange-950 text-center mt-2 mb-1">Pedido #{activeOrder.id}</h2>
           <p className="text-center text-orange-600/80 text-sm mb-8">Acompanhe o status em tempo real</p>
 
           <div className="space-y-6 relative before:absolute before:inset-0 before:ml-4 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-orange-100">
-            {/* Status 1 */}
             <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
-              <div className={`flex items-center justify-center w-8 h-8 rounded-full border-4 border-white shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-sm ${activeOrder.status === 'aguardando' || activeOrder.status === 'producao' || activeOrder.status === 'entrega' ? 'bg-orange-500' : 'bg-orange-100'}`}>
-                <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <div className={`flex items-center justify-center w-8 h-8 rounded-full border-4 border-white shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-sm ${['aguardando','producao','entrega'].includes(activeOrder.status) ? 'bg-orange-500' : 'bg-orange-100'}`}>
+                <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
               </div>
               <div className="w-[calc(100%-3rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-orange-100 bg-orange-50/50 shadow-sm">
                 <h3 className={`font-bold text-base ${activeOrder.status === 'aguardando' ? 'text-orange-600' : 'text-orange-400'}`}>1. Aguardando</h3>
-                {activeOrder.status === 'aguardando' && <p className="text-xs text-orange-600/70 mt-1">Estamos conferindo seu pedido.</p>}
               </div>
             </div>
 
-            {/* Status 2 */}
             <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
-              <div className={`flex items-center justify-center w-8 h-8 rounded-full border-4 border-white shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-sm ${activeOrder.status === 'producao' || activeOrder.status === 'entrega' ? 'bg-pink-500' : 'bg-orange-100'}`}>
-                <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <div className={`flex items-center justify-center w-8 h-8 rounded-full border-4 border-white shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-sm ${['producao','entrega'].includes(activeOrder.status) ? 'bg-pink-500' : 'bg-orange-100'}`}>
+                <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
               </div>
               <div className="w-[calc(100%-3rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-orange-100 bg-white shadow-sm">
                 <h3 className={`font-bold text-base ${activeOrder.status === 'producao' ? 'text-pink-600' : 'text-orange-300'}`}>2. Em Produção</h3>
-                {activeOrder.status === 'producao' && <p className="text-xs text-slate-500 mt-1">Seu pedido está sendo montado!</p>}
               </div>
             </div>
 
-            {/* Status 3 */}
             <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
               <div className={`flex items-center justify-center w-8 h-8 rounded-full border-4 border-white shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-sm ${activeOrder.status === 'entrega' ? 'bg-[#25D366]' : 'bg-orange-100'}`}>
-                <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
               </div>
               <div className="w-[calc(100%-3rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-orange-100 bg-white shadow-sm">
                 <h3 className={`font-bold text-base ${activeOrder.status === 'entrega' ? 'text-[#25D366]' : 'text-orange-300'}`}>3. Saiu para Entrega</h3>
               </div>
-            </div>
-          </div>
-          
-          {/* BOTÕES DE TESTE (ADMIN) */}
-          <div className="mt-10 pt-4 border-t border-orange-100 flex flex-col gap-2">
-            <p className="text-[10px] text-center text-orange-400 uppercase font-bold tracking-widest">Simulação do Admin da Loja</p>
-            <div className="flex gap-2">
-              <button onClick={() => updateActiveOrderStatus('producao')} className="flex-1 bg-pink-100 text-pink-600 font-bold text-xs py-2 rounded-lg hover:bg-pink-200">Em Produção</button>
-              <button onClick={() => updateActiveOrderStatus('entrega')} className="flex-1 bg-green-100 text-green-700 font-bold text-xs py-2 rounded-lg hover:bg-green-200">Entregar</button>
             </div>
           </div>
         </div>
@@ -264,31 +241,20 @@ export default function PedacinhoDeFelicidade() {
     );
   }
 
-  // ==========================================
-  // TELA PRINCIPAL (LOJA)
-  // ==========================================
   return (
     <div className="min-h-screen bg-orange-50 pb-32 font-sans selection:bg-pink-200">
       
-      {/* 1. CABEÇALHO (AGORA COM BOTÃO "MEUS PEDIDOS" NO CANTO) */}
       <header className="relative px-4 pt-4 pb-5 text-center shadow-sm flex flex-col items-center justify-center overflow-hidden border-b border-orange-100">
-        
-        {/* Camada de Vidro */}
         <div className="absolute inset-0 z-0 opacity-20 bg-cover bg-center" style={{ backgroundImage: "url('/IMG-20260730-WA0114.jpg')" }}></div>
         <div className="absolute inset-0 z-0 bg-white/70 backdrop-blur-md"></div>
         
-        {/* BOTÃO MEUS PEDIDOS */}
-        <button 
-          onClick={() => setIsHistoryOpen(true)}
-          className="absolute top-4 right-4 z-20 flex flex-col items-center justify-center p-2 rounded-xl bg-white/80 backdrop-blur-sm border border-orange-200 shadow-sm hover:bg-orange-50 transition-colors"
-        >
+        <button onClick={() => setIsHistoryOpen(true)} className="absolute top-4 right-4 z-20 flex flex-col items-center justify-center p-2 rounded-xl bg-white/80 backdrop-blur-sm border border-orange-200 shadow-sm hover:bg-orange-50 transition-colors">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
           <span className="text-[9px] font-black text-orange-600 uppercase mt-1">Pedidos</span>
         </button>
 
-        {/* Conteúdo do Cabeçalho */}
         <div className="relative z-10 flex flex-col items-center w-full mt-2">
-          <img src="/pedacinhadafelicidade.jpg" alt="Logo" className="w-56 h-20 sm:w-64 sm:h-24 object-cover object-center drop-shadow-sm mix-blend-multiply" />
+          <img src="/IMG-20260730-WA0114.jpg" alt="Logo" className="w-56 h-20 sm:w-64 sm:h-24 object-cover object-center drop-shadow-sm mix-blend-multiply" />
           <p className="text-orange-600 font-bold text-sm -mt-1 mb-3">Sua dose diária de alegria 💜</p>
           
           <div className="flex flex-col items-center gap-1.5">
@@ -312,121 +278,86 @@ export default function PedacinhoDeFelicidade() {
         </div>
       </header>
 
-      {/* OS QUERIDINHOS */}
-      <section className="pt-6">
-        <div className="px-4 mb-3 flex items-baseline justify-between">
-          <h2 className="text-xl font-black text-orange-950">Os Queridinhos 😍</h2>
-        </div>
-        <div className="flex overflow-x-auto gap-3 px-4 pb-4 snap-x [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
-          {PRE_MADE.map((item) => (
-            <div key={item.id} className="min-w-[190px] max-w-[210px] bg-white rounded-2xl shadow-sm border border-orange-100 p-2.5 snap-center shrink-0 flex flex-col hover:shadow-md transition-shadow">
-              <div className="relative h-36 mb-2">
-                <img src={item.image} alt={item.name} className={`w-full h-full object-cover rounded-xl border-[3px] ${item.borderColor}`} />
-                <span className={`absolute top-2 left-2 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm ${item.tagColor}`}>{item.tag}</span>
-              </div>
-              <h3 className="font-bold text-base text-slate-800 leading-tight">{item.name}</h3>
-              <p className="text-xs text-slate-500 mt-1 flex-grow line-clamp-2">{item.description}</p>
-              <div className="flex items-center justify-between mt-3 pt-2 border-t border-orange-50">
-                <span className="text-orange-600 font-black text-lg">R$ {item.price.toFixed(2)}</span>
-                <button onClick={() => openBuilder(item)} className="bg-[#FFD100] hover:bg-yellow-400 text-yellow-900 font-bold px-4 py-1.5 rounded-full text-xs active:scale-95 transition-transform shadow-sm">Pedir</button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* RENDERIZAÇÃO DINÂMICA DE TODAS AS SEÇÕES */}
+      {sections.map((section) => {
+        if (!section.items || section.items.length === 0) return null;
 
-      {/* MONTE DO SEU JEITO */}
-      <section className="pt-4 px-4 max-w-md mx-auto">
-        <div className="mb-4"><h2 className="text-xl font-black text-orange-950">Monte do Seu Jeito 🎨</h2></div>
-        <div className="flex flex-col gap-3">
-          {MONTE_SEU_JEITO.map((item) => (
-            <div key={item.id} className="bg-white rounded-2xl shadow-sm border border-orange-100 p-3 flex gap-4 h-[120px] hover:shadow-md transition-shadow">
-              <div className="h-full w-24 shrink-0"><img src={item.image} alt={item.name} className="w-full h-full object-cover rounded-xl border border-orange-50" /></div>
-              <div className="flex-1 flex flex-col justify-between py-1">
-                <div>
-                  <h3 className="font-semibold text-slate-800 text-[15px] leading-tight">{item.name}</h3>
-                  <p className="text-[13px] text-slate-400 mt-0.5">{item.description}</p>
-                </div>
-                <div className="flex items-center justify-between mt-auto">
-                  <span className="text-orange-600 font-black text-base">R$ {item.price.toFixed(2)}</span>
-                  <button onClick={() => openBuilder(item)} className="bg-[#FFD100] hover:bg-yellow-400 text-yellow-900 font-bold px-5 py-1.5 rounded-full text-xs active:scale-95 transition-transform shadow-sm">Pedir</button>
-                </div>
+        // Se o layout for carrossel (estilo queridinhos)
+        if (section.layout === 'carousel') {
+          return (
+            <section key={section.id} className="pt-6">
+              <div className="px-4 mb-3 flex items-baseline justify-between"><h2 className="text-xl font-black text-orange-950">{section.title}</h2></div>
+              <div className="flex overflow-x-auto gap-3 px-4 pb-4 snap-x [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
+                {section.items.map((item) => (
+                  <div key={item.id} className="min-w-[190px] max-w-[210px] bg-white rounded-2xl shadow-sm border border-orange-100 p-2.5 snap-center shrink-0 flex flex-col">
+                    <div className="relative h-36 mb-2">
+                      <img src={item.image || "https://images.unsplash.com/photo-1590137876181-2a5a7e340308?auto=format&fit=crop&q=80&w=600"} alt={item.name} className={`w-full h-full object-cover rounded-xl border-[3px] ${item.borderColor || 'border-orange-500'}`} />
+                      {item.tag && <span className={`absolute top-2 left-2 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm ${item.tagColor || 'bg-orange-500'}`}>{item.tag}</span>}
+                    </div>
+                    <h3 className="font-bold text-base text-slate-800 leading-tight">{item.name}</h3>
+                    <p className="text-xs text-slate-500 mt-1 flex-grow line-clamp-2">{item.description}</p>
+                    <div className="flex items-center justify-between mt-3 pt-2 border-t border-orange-50">
+                      <span className="text-orange-600 font-black text-lg">R$ {Number(item.price).toFixed(2)}</span>
+                      <button onClick={() => openBuilder(item)} className="bg-[#FFD100] text-yellow-900 font-bold px-4 py-1.5 rounded-full text-xs active:scale-95 shadow-sm">Pedir</button>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-          ))}
-        </div>
-      </section>
+            </section>
+          );
+        }
 
-      {/* CAMADINHAS NO COPO */}
-      <section className="pt-8 px-4 max-w-md mx-auto">
-        <div className="mb-4"><h2 className="text-xl font-black text-orange-950">Camadinhas no Copo 🍨</h2></div>
-        <div className="flex flex-col gap-3">
-          {CAMADINHAS.map((item) => (
-            <div key={item.id} className="bg-white rounded-2xl shadow-sm border border-orange-100 p-3 flex gap-4 h-[120px] hover:shadow-md transition-shadow">
-              <div className="h-full w-24 shrink-0"><img src={item.image} alt={item.name} className="w-full h-full object-cover rounded-xl border border-orange-50" /></div>
-              <div className="flex-1 flex flex-col justify-between py-1">
-                <div>
-                  <h3 className="font-semibold text-slate-800 text-[15px] leading-tight">{item.name}</h3>
-                  <p className="text-[13px] text-slate-400 mt-0.5">{item.description}</p>
+        // Layout padrão vertical (lista)
+        return (
+          <section key={section.id} className="pt-6 px-4 max-w-md mx-auto">
+            <div className="mb-4"><h2 className="text-xl font-black text-orange-950">{section.title}</h2></div>
+            <div className="flex flex-col gap-3">
+              {section.items.map((item) => (
+                <div key={item.id} className="bg-white rounded-2xl shadow-sm border border-orange-100 p-3 flex gap-4 h-[120px]">
+                  <div className="h-full w-24 shrink-0"><img src={item.image || "https://images.unsplash.com/photo-1579954115545-a95591f28bfc?auto=format&fit=crop&q=80&w=300"} alt={item.name} className="w-full h-full object-cover rounded-xl border border-orange-50" /></div>
+                  <div className="flex-1 flex flex-col justify-between py-1">
+                    <div>
+                      <h3 className="font-semibold text-slate-800 text-[15px] leading-tight">{item.name}</h3>
+                      <p className="text-[13px] text-slate-400 mt-0.5 line-clamp-2">{item.description}</p>
+                    </div>
+                    <div className="flex items-center justify-between mt-auto">
+                      <span className="text-orange-600 font-black text-base">R$ {Number(item.price).toFixed(2)}</span>
+                      <button onClick={() => openBuilder(item)} className="bg-[#FFD100] text-yellow-900 font-bold px-5 py-1.5 rounded-full text-xs active:scale-95">Pedir</button>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between mt-auto">
-                  <span className="text-orange-600 font-black text-base">R$ {item.price.toFixed(2)}</span>
-                  <button onClick={() => openBuilder(item)} className="bg-[#FFD100] hover:bg-yellow-400 text-yellow-900 font-bold px-5 py-1.5 rounded-full text-xs active:scale-95 transition-transform shadow-sm">Pedir</button>
-                </div>
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </section>
+          </section>
+        );
+      })}
 
-      {/* CASADINHO */}
-      <section className="pt-8 px-4 max-w-md mx-auto mb-8">
-        <div className="mb-4"><h2 className="text-xl font-black text-orange-950">Casadinho 🤝</h2></div>
-        <div className="flex flex-col gap-3">
-          {CASADINHOS.map((item) => (
-            <div key={item.id} className="bg-white rounded-2xl shadow-sm border border-orange-100 p-3 flex gap-4 h-[120px] hover:shadow-md transition-shadow">
-              <div className="h-full w-24 shrink-0"><img src={item.image} alt={item.name} className="w-full h-full object-cover rounded-xl border border-orange-50" /></div>
-              <div className="flex-1 flex flex-col justify-between py-1">
-                <div>
-                  <h3 className="font-semibold text-slate-800 text-[15px] leading-tight">{item.name}</h3>
-                  <p className="text-[13px] text-slate-400 mt-0.5">{item.description}</p>
-                </div>
-                <div className="flex items-center justify-between mt-auto">
-                  <span className="text-orange-600 font-black text-base">R$ {item.price.toFixed(2)}</span>
-                  <button onClick={() => openBuilder(item)} className="bg-[#FFD100] hover:bg-yellow-400 text-yellow-900 font-bold px-5 py-1.5 rounded-full text-xs active:scale-95 transition-transform shadow-sm">Pedir</button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* MODAL: TELA DE ACOMPANHAMENTOS */}
+      {/* MODAL DE ACOMPANHAMENTOS */}
       {buildingItem && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-end justify-center p-0 sm:p-4">
           <div className="bg-white w-full sm:w-[480px] max-h-[85vh] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-slide-up">
             <div className="px-6 py-4 border-b border-orange-100 flex justify-between items-center bg-orange-50/50">
               <div>
                 <h2 className="text-lg font-black text-slate-800">Montar {buildingItem.name.split(" -")[0]}</h2>
-                <p className="text-xs text-orange-600 font-medium">Direito a {buildingItem.freeLimit} itens grátis.</p>
+                <p className="text-xs text-orange-600 font-medium">Direito a {buildingItem.freeLimit || 3} itens grátis.</p>
               </div>
-              <button onClick={() => setBuildingItem(null)} className="p-2 bg-white border border-orange-100 text-slate-600 rounded-full active:scale-95 shadow-sm">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              <button onClick={() => setBuildingItem(null)} className="p-2 bg-white border border-orange-100 text-slate-600 rounded-full">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
               </button>
             </div>
 
             <div className="p-5 overflow-y-auto" style={{ scrollbarWidth: 'none' }}>
               <div className="grid grid-cols-1 gap-3 mb-6">
-                {TOPPINGS.map((t) => {
+                {toppings.map((t) => {
                   const isSelected = selectedToppings.find((x) => x.id === t.id);
                   return (
-                    <button key={t.id} onClick={() => toggleTopping(t)} className={`text-left p-4 rounded-xl border-2 transition-all flex justify-between items-center ${isSelected ? (t.premium ? "border-orange-500 bg-orange-50" : "border-pink-500 bg-pink-50") : "border-slate-100 bg-white hover:border-orange-200 shadow-sm"}`}>
+                    <button key={t.id} onClick={() => toggleTopping(t)} className={`text-left p-4 rounded-xl border-2 transition-all flex justify-between items-center ${isSelected ? (t.premium ? "border-orange-500 bg-orange-50" : "border-pink-500 bg-pink-50") : "border-slate-100 bg-white shadow-sm"}`}>
                       <div className="flex flex-col">
                         <span className={`font-bold ${isSelected ? "text-slate-900" : "text-slate-700"}`}>{t.name}</span>
-                        <span className={`text-xs font-bold mt-1 ${t.premium ? "text-orange-500" : "text-slate-400"}`}>{t.premium ? `+ R$ ${t.price.toFixed(2)}` : (isSelected ? "Adicionado" : "Grátis*")}</span>
+                        <span className={`text-xs font-bold mt-1 ${t.premium ? "text-orange-500" : "text-slate-400"}`}>{t.premium ? `+ R$ ${Number(t.price).toFixed(2)}` : (isSelected ? "Adicionado" : "Grátis*")}</span>
                       </div>
                       <div className={`w-6 h-6 rounded-full flex items-center justify-center border-2 ${isSelected ? (t.premium ? "bg-orange-500 border-orange-500" : "bg-pink-500 border-pink-500") : "border-slate-200 bg-slate-50"}`}>
-                        {isSelected && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>}
+                        {isSelected && <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>}
                       </div>
                     </button>
                   );
@@ -435,7 +366,7 @@ export default function PedacinhoDeFelicidade() {
             </div>
 
             <div className="p-4 border-t border-orange-100 bg-white">
-              <button onClick={confirmItemToCart} className="w-full bg-[#FFD100] text-yellow-900 font-black py-4 rounded-xl shadow-lg shadow-yellow-200 active:scale-95 transition-transform flex justify-between items-center px-6 text-lg">
+              <button onClick={confirmItemToCart} className="w-full bg-[#FFD100] text-yellow-900 font-black py-4 rounded-xl shadow-lg flex justify-between items-center px-6 text-lg">
                 <span>Colocar no Carrinho</span>
                 <span>R$ {calculateItemPrice().toFixed(2)}</span>
               </button>
@@ -444,34 +375,24 @@ export default function PedacinhoDeFelicidade() {
         </div>
       )}
 
-      {/* MODAL: MEUS PEDIDOS (HISTÓRICO) */}
+      {/* MODAL HISTÓRICO */}
       {isHistoryOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="bg-white w-full sm:w-[480px] max-h-[90vh] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-slide-up">
+          <div className="bg-white w-full sm:w-[480px] max-h-[90vh] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden">
             <div className="px-6 py-5 border-b border-orange-100 flex justify-between items-center bg-orange-50/50">
               <h2 className="text-xl font-black text-slate-800">Meus Pedidos</h2>
-              <button onClick={() => setIsHistoryOpen(false)} className="p-2 bg-white border border-orange-100 text-slate-600 rounded-full active:scale-95 shadow-sm">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              <button onClick={() => setIsHistoryOpen(false)} className="p-2 bg-white border border-orange-100 text-slate-600 rounded-full">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
               </button>
             </div>
             
-            <div className="p-6 overflow-y-auto bg-slate-50 flex-1" style={{ scrollbarWidth: 'none' }}>
+            <div className="p-6 overflow-y-auto bg-slate-50 flex-1">
               {orderHistory.length === 0 ? (
-                <div className="text-center py-10">
-                  <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
-                  </div>
-                  <h3 className="font-bold text-slate-700">Nenhum pedido ainda</h3>
-                  <p className="text-sm text-slate-500 mt-1">Seus pedidos aparecerão aqui para você acompanhar.</p>
-                </div>
+                <div className="text-center py-10"><h3 className="font-bold text-slate-700">Nenhum pedido ainda</h3></div>
               ) : (
                 <div className="flex flex-col gap-4">
                   {orderHistory.map((order) => (
-                    <button 
-                      key={order.id} 
-                      onClick={() => { setActiveOrder(order); setIsHistoryOpen(false); }}
-                      className="bg-white border border-slate-200 rounded-2xl p-4 text-left shadow-sm hover:border-orange-300 transition-colors flex flex-col relative overflow-hidden"
-                    >
+                    <button key={order.id} onClick={() => { setActiveOrder(order); setIsHistoryOpen(false); }} className="bg-white border border-slate-200 rounded-2xl p-4 text-left shadow-sm flex flex-col relative overflow-hidden">
                       <div className={`absolute top-0 left-0 w-1.5 h-full ${order.status === 'aguardando' ? 'bg-orange-500' : order.status === 'producao' ? 'bg-pink-500' : 'bg-[#25D366]'}`}></div>
                       <div className="flex justify-between items-start mb-2 pl-2">
                         <span className="font-black text-slate-800 text-lg">Pedido #{order.id}</span>
@@ -492,44 +413,43 @@ export default function PedacinhoDeFelicidade() {
         </div>
       )}
 
-      {/* ZONA DO POLEGAR (RODAPÉ) */}
+      {/* CARRINHO */}
       {cart.length > 0 && !isCheckoutOpen && !isPixScreenOpen && !isHistoryOpen && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md p-4 shadow-[0_-10px_40px_rgba(255,165,0,0.15)] z-20 rounded-t-3xl border-t border-orange-100 animate-fade-in-up">
+        <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md p-4 shadow-xl z-20 rounded-t-3xl border-t border-orange-100">
           <div className="max-w-md mx-auto flex items-center justify-between">
             <div className="flex flex-col">
-              <span className="text-xs text-orange-600 font-bold uppercase tracking-wider">{cart.length} item(s) no carrinho</span>
+              <span className="text-xs text-orange-600 font-bold uppercase">{cart.length} item(s)</span>
               <span className="text-slate-800 font-black text-2xl">R$ {cartSubtotal.toFixed(2)}</span>
             </div>
-            <button onClick={() => setIsCheckoutOpen(true)} className="bg-[#FFD100] text-yellow-900 px-8 py-4 rounded-full font-black text-lg shadow-lg shadow-yellow-200 active:scale-95 transition-transform flex items-center gap-2">
+            <button onClick={() => setIsCheckoutOpen(true)} className="bg-[#FFD100] text-yellow-900 px-8 py-4 rounded-full font-black text-lg shadow-lg">
               Ver Pedido
             </button>
           </div>
         </div>
       )}
 
-      {/* MODAL DE CHECKOUT LOGÍSTICO */}
+      {/* CHECKOUT */}
       {isCheckoutOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
-          <div className="bg-white w-full sm:w-[480px] max-h-[90vh] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-slide-up">
-            
+          <div className="bg-white w-full sm:w-[480px] max-h-[90vh] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden">
             <div className="px-6 py-5 border-b border-orange-100 flex justify-between items-center bg-orange-50/50">
               <h2 className="text-xl font-black text-slate-800">Seu Pedido</h2>
-              <button onClick={() => setIsCheckoutOpen(false)} className="p-2 bg-white border border-orange-100 text-slate-600 rounded-full active:scale-95 shadow-sm">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              <button onClick={() => setIsCheckoutOpen(false)} className="p-2 bg-white border border-orange-100 text-slate-600 rounded-full">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto" style={{ scrollbarWidth: 'none' }}>
-              <div className="bg-orange-50 border border-orange-200 rounded-2xl p-5 mb-6 shadow-inner">
-                <h3 className="font-black text-orange-600 mb-4 flex items-center gap-2">📍 Para onde vamos mandar?</h3>
+            <div className="p-6 overflow-y-auto">
+              <div className="bg-orange-50 border border-orange-200 rounded-2xl p-5 mb-6">
+                <h3 className="font-black text-orange-600 mb-4">📍 Para onde vamos mandar?</h3>
                 <div className="space-y-3">
-                  <input type="text" placeholder="Seu Nome Completo" value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="w-full p-3 rounded-xl border border-orange-200 focus:outline-none focus:ring-2 focus:ring-orange-500 font-medium" />
-                  <textarea placeholder="Seu Endereço (Rua, Número, Bairro, Ref.)" rows="2" value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} className="w-full p-3 rounded-xl border border-orange-200 focus:outline-none focus:ring-2 focus:ring-orange-500 font-medium" />
+                  <input type="text" placeholder="Seu Nome Completo" value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="w-full p-3 rounded-xl border border-orange-200 bg-white font-medium" />
+                  <textarea placeholder="Seu Endereço (Rua, Número, Bairro)" rows="2" value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} className="w-full p-3 rounded-xl border border-orange-200 bg-white font-medium" />
                   
                   <div className="pt-2">
                     <span className="text-sm font-bold text-slate-700 block mb-2">Forma de Pagamento:</span>
                     <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="w-full p-3 rounded-xl border border-orange-200 bg-white font-bold text-slate-800">
-                      <option value="Pix">Pix (Copia e Cola no App)</option>
+                      <option value="Pix">Pix (Copia e Cola)</option>
                       <option value="Cartão">Cartão na Entrega</option>
                       <option value="Dinheiro">Dinheiro na Entrega</option>
                     </select>
@@ -544,11 +464,11 @@ export default function PedacinhoDeFelicidade() {
               </div>
 
               {cartSubtotal < MINIMUM_ORDER ? (
-                <button disabled className="w-full bg-slate-100 text-slate-400 font-black py-4 rounded-xl shadow-inner cursor-not-allowed text-base transition-all border border-slate-200">
+                <button disabled className="w-full bg-slate-100 text-slate-400 font-black py-4 rounded-xl cursor-not-allowed">
                   Faltam R$ {(MINIMUM_ORDER - cartSubtotal).toFixed(2).replace('.', ',')} para o pedido mínimo
                 </button>
               ) : (
-                <button onClick={handleCheckoutSubmit} className="w-full bg-[#FFD100] text-yellow-900 font-black py-4 rounded-xl shadow-lg shadow-yellow-200 active:scale-95 transition-transform text-lg">
+                <button onClick={handleCheckoutSubmit} className="w-full bg-[#FFD100] text-yellow-900 font-black py-4 rounded-xl shadow-lg text-lg">
                   Finalizar Pedido
                 </button>
               )}
@@ -557,60 +477,31 @@ export default function PedacinhoDeFelicidade() {
         </div>
       )}
 
-      {/* TELA DO PIX COM UPLOAD DE COMPROVANTE */}
+      {/* PIX SCREEN */}
       {isPixScreenOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6 flex flex-col items-center animate-slide-up relative">
-            <button onClick={() => setIsPixScreenOpen(false)} className="absolute top-4 right-4 p-2 bg-orange-50 border border-orange-100 text-slate-600 rounded-full hover:bg-orange-100">
+          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6 flex flex-col items-center relative">
+            <button onClick={() => setIsPixScreenOpen(false)} className="absolute top-4 right-4 p-2 bg-orange-50 border border-orange-100 text-slate-600 rounded-full">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
-            
-            <div className="w-16 h-16 bg-[#32BCAD]/10 rounded-full flex items-center justify-center mb-4">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#32BCAD" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-            </div>
-            
             <h2 className="text-xl font-black text-slate-800 mb-1">Pagamento via Pix</h2>
-            <p className="text-slate-500 text-sm text-center mb-6">Copie a chave abaixo, pague no app do seu banco e envie o comprovante.</p>
-            
-            <div className="text-3xl font-black text-[#32BCAD] mb-6">
-              R$ {cartTotal.toFixed(2)}
-            </div>
-
+            <div className="text-3xl font-black text-[#32BCAD] mb-6">R$ {cartTotal.toFixed(2)}</div>
             <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 mb-6 flex items-center justify-between">
               <span className="font-mono text-sm text-slate-600 truncate mr-2">{PIX_KEY}</span>
-              <button onClick={copyPixKey} className="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold text-xs shrink-0 active:scale-95 shadow-md">
-                {pixCopied ? "Copiado!" : "Copiar"}
-              </button>
+              <button onClick={copyPixKey} className="bg-slate-800 text-white px-4 py-2 rounded-lg font-bold text-xs">{pixCopied ? "Copiado!" : "Copiar"}</button>
             </div>
-
             <div className="w-full mb-6">
-              <label className="block w-full border-2 border-dashed border-orange-300 bg-orange-50/50 rounded-xl p-4 text-center cursor-pointer hover:bg-orange-50 transition-colors">
-                <span className="text-sm font-bold text-orange-600 block mb-1">
-                  {receiptFile ? "Comprovante Anexado ✅" : "Anexar Comprovante"}
-                </span>
-                <span className="text-xs text-orange-400">
-                  {receiptFile ? receiptFile.name : "Toque para escolher a imagem"}
-                </span>
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  className="hidden" 
-                  onChange={(e) => setReceiptFile(e.target.files[0])} 
-                />
+              <label className="block w-full border-2 border-dashed border-orange-300 bg-orange-50/50 rounded-xl p-4 text-center cursor-pointer">
+                <span className="text-sm font-bold text-orange-600 block mb-1">{receiptFile ? "Comprovante Anexado ✅" : "Anexar Comprovante"}</span>
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => setReceiptFile(e.target.files[0])} />
               </label>
             </div>
-
-            <button 
-              onClick={submitReceipt} 
-              disabled={!receiptFile}
-              className={`w-full py-4 rounded-xl font-black text-lg transition-all ${receiptFile ? 'bg-[#32BCAD] text-white shadow-lg shadow-[#32BCAD]/30 active:scale-95' : 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300'}`}
-            >
+            <button onClick={submitReceipt} disabled={!receiptFile} className={`w-full py-4 rounded-xl font-black text-lg ${receiptFile ? 'bg-[#32BCAD] text-white shadow-lg' : 'bg-slate-200 text-slate-400 cursor-not-allowed'}`}>
               Confirmar Pagamento
             </button>
           </div>
         </div>
       )}
-
     </div>
   );
 }
