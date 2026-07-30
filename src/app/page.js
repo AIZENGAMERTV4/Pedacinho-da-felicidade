@@ -24,26 +24,6 @@ const DEFAULT_SECTIONS = [
       { id: "m700", name: "Açaí Tradicional - 700ml", description: "Com 6 acompanhamentos", price: 28.0, image: "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&q=80&w=300", freeLimit: 6 },
       { id: "m900", name: "Marmita 900ml", description: "Com direito a 10 acompanhamentos", price: 40.0, image: "https://images.unsplash.com/photo-1550461716-ba42023d83b1?auto=format&fit=crop&q=80&w=300", freeLimit: 10 }
     ]
-  },
-  {
-    id: "sec_camadinhas",
-    title: "Camadinhas no Copo 🍨",
-    layout: "vertical",
-    items: [
-      { id: "cm300", name: "Camadinha - 300ml", description: "Açaí e creme em camadas perfeitas. Com 4 acompanhamentos", price: 19.0, image: "https://images.unsplash.com/photo-1579954115545-a95591f28bfc?auto=format&fit=crop&q=80&w=300", freeLimit: 4 },
-      { id: "cm500", name: "Camadinha - 500ml", description: "Açaí e creme em camadas perfeitas. Com 5 acompanhamentos", price: 24.0, image: "https://images.unsplash.com/photo-1626074353765-517a681e40be?auto=format&fit=crop&q=80&w=300", freeLimit: 5 },
-      { id: "cm700", name: "Camadinha - 700ml", description: "Açaí e creme em camadas perfeitas. Com 6 acompanhamentos", price: 32.0, image: "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&q=80&w=300", freeLimit: 6 }
-    ]
-  },
-  {
-    id: "sec_casadinho",
-    title: "Casadinho 🤝",
-    layout: "vertical",
-    items: [
-      { id: "cs300", name: "Casadinho - 300ml", description: "Metade Açaí, metade Cupuaçu. Com 4 acompanhamentos", price: 18.0, image: "https://images.unsplash.com/photo-1579954115545-a95591f28bfc?auto=format&fit=crop&q=80&w=300", freeLimit: 4 },
-      { id: "cs500", name: "Casadinho - 500ml", description: "Metade Açaí, metade Cupuaçu. Com 5 acompanhamentos", price: 22.0, image: "https://images.unsplash.com/photo-1626074353765-517a681e40be?auto=format&fit=crop&q=80&w=300", freeLimit: 5 },
-      { id: "cs700", name: "Casadinho - 700ml", description: "Metade Açaí, metade Cupuaçu. Com 6 acompanhamentos", price: 30.0, image: "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&q=80&w=300", freeLimit: 6 }
-    ]
   }
 ];
 
@@ -60,7 +40,7 @@ const DEFAULT_TOPPINGS = [
 
 const DELIVERY_FEE = 5.0; 
 const MINIMUM_ORDER = 20.0; 
-const PIX_KEY = "74999580828"; 
+const PIX_KEY = "suachave@pix.com.br"; 
 
 export default function PedacinhoDeFelicidade() {
   const [cart, setCart] = useState([]);
@@ -177,7 +157,8 @@ export default function PedacinhoDeFelicidade() {
       total: cartTotal,
       status: status,
       customer: customerName,
-      address: customerAddress
+      address: customerAddress,
+      deliveryPhoto: null
     };
     
     const updatedHistory = [newOrder, ...orderHistory];
@@ -192,6 +173,7 @@ export default function PedacinhoDeFelicidade() {
     if (status === 'aguardando') return 'Aguardando Confirmação';
     if (status === 'producao') return 'Em Produção';
     if (status === 'entrega') return 'Saiu para Entrega';
+    if (status === 'finalizado') return 'Finalizado ✅';
     return status;
   };
 
@@ -202,40 +184,65 @@ export default function PedacinhoDeFelicidade() {
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
 
-        <img src="/pedacinhadafelicidade.jpg" alt="Logo" className="w-48 object-contain mb-8 mix-blend-multiply" />
+        <img src="/IMG-20260730-WA0114.jpg" alt="Logo" className="w-48 object-contain mb-8 mix-blend-multiply" />
         <div className="bg-white w-full max-w-md rounded-3xl shadow-xl p-6 border border-orange-100 relative overflow-hidden">
-          <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-pink-500 via-orange-500 to-yellow-500"></div>
+          <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-pink-500 via-orange-500 to-green-500"></div>
           <h2 className="text-2xl font-black text-orange-950 text-center mt-2 mb-1">Pedido #{activeOrder.id}</h2>
-          <p className="text-center text-orange-600/80 text-sm mb-8">Acompanhe o status em tempo real</p>
+          <p className="text-center text-orange-600/80 text-sm mb-6">Acompanhe o status em tempo real</p>
 
           <div className="space-y-6 relative before:absolute before:inset-0 before:ml-4 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-orange-100">
+            {/* 1. Aguardando */}
             <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
-              <div className={`flex items-center justify-center w-8 h-8 rounded-full border-4 border-white shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-sm ${['aguardando','producao','entrega'].includes(activeOrder.status) ? 'bg-orange-500' : 'bg-orange-100'}`}>
+              <div className={`flex items-center justify-center w-8 h-8 rounded-full border-4 border-white shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-sm ${['aguardando','producao','entrega','finalizado'].includes(activeOrder.status) ? 'bg-orange-500' : 'bg-orange-100'}`}>
                 <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
               </div>
               <div className="w-[calc(100%-3rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-orange-100 bg-orange-50/50 shadow-sm">
-                <h3 className={`font-bold text-base ${activeOrder.status === 'aguardando' ? 'text-orange-600' : 'text-orange-400'}`}>1. Aguardando</h3>
+                <h3 className="font-bold text-base text-orange-600">1. Aguardando Confirmação</h3>
               </div>
             </div>
 
+            {/* 2. Em Produção */}
             <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
-              <div className={`flex items-center justify-center w-8 h-8 rounded-full border-4 border-white shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-sm ${['producao','entrega'].includes(activeOrder.status) ? 'bg-pink-500' : 'bg-orange-100'}`}>
+              <div className={`flex items-center justify-center w-8 h-8 rounded-full border-4 border-white shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-sm ${['producao','entrega','finalizado'].includes(activeOrder.status) ? 'bg-pink-500' : 'bg-orange-100'}`}>
                 <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
               </div>
               <div className="w-[calc(100%-3rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-orange-100 bg-white shadow-sm">
-                <h3 className={`font-bold text-base ${activeOrder.status === 'producao' ? 'text-pink-600' : 'text-orange-300'}`}>2. Em Produção</h3>
+                <h3 className={`font-bold text-base ${['producao','entrega','finalizado'].includes(activeOrder.status) ? 'text-pink-600' : 'text-orange-300'}`}>2. Em Produção</h3>
               </div>
             </div>
 
+            {/* 3. Saiu para Entrega */}
             <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
-              <div className={`flex items-center justify-center w-8 h-8 rounded-full border-4 border-white shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-sm ${activeOrder.status === 'entrega' ? 'bg-[#25D366]' : 'bg-orange-100'}`}>
+              <div className={`flex items-center justify-center w-8 h-8 rounded-full border-4 border-white shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-sm ${['entrega','finalizado'].includes(activeOrder.status) ? 'bg-blue-500' : 'bg-orange-100'}`}>
                 <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
               </div>
               <div className="w-[calc(100%-3rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-orange-100 bg-white shadow-sm">
-                <h3 className={`font-bold text-base ${activeOrder.status === 'entrega' ? 'text-[#25D366]' : 'text-orange-300'}`}>3. Saiu para Entrega</h3>
+                <h3 className={`font-bold text-base ${['entrega','finalizado'].includes(activeOrder.status) ? 'text-blue-600' : 'text-orange-300'}`}>3. Saiu para Entrega</h3>
+              </div>
+            </div>
+
+            {/* 4. Finalizado */}
+            <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
+              <div className={`flex items-center justify-center w-8 h-8 rounded-full border-4 border-white shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-sm ${activeOrder.status === 'finalizado' ? 'bg-green-500' : 'bg-orange-100'}`}>
+                <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </div>
+              <div className="w-[calc(100%-3rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-orange-100 bg-white shadow-sm">
+                <h3 className={`font-bold text-base ${activeOrder.status === 'finalizado' ? 'text-green-600' : 'text-orange-300'}`}>4. Finalizado ✅</h3>
               </div>
             </div>
           </div>
+
+          {activeOrder.status === 'finalizado' && (
+            <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-2xl text-center">
+              <p className="font-black text-green-700 text-sm">Pedido entregue e finalizado com sucesso! 🎉</p>
+              {activeOrder.deliveryPhoto && (
+                <div className="mt-3">
+                  <p className="text-xs font-bold text-slate-500 mb-1">Foto de comprovação da entrega:</p>
+                  <img src={activeOrder.deliveryPhoto} alt="Comprovação de Entrega" className="w-full h-40 object-cover rounded-xl border border-green-300" />
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -243,7 +250,6 @@ export default function PedacinhoDeFelicidade() {
 
   return (
     <div className="min-h-screen bg-orange-50 pb-32 font-sans selection:bg-pink-200">
-      
       <header className="relative px-4 pt-4 pb-5 text-center shadow-sm flex flex-col items-center justify-center overflow-hidden border-b border-orange-100">
         <div className="absolute inset-0 z-0 opacity-20 bg-cover bg-center" style={{ backgroundImage: "url('/IMG-20260730-WA0114.jpg')" }}></div>
         <div className="absolute inset-0 z-0 bg-white/70 backdrop-blur-md"></div>
@@ -254,7 +260,7 @@ export default function PedacinhoDeFelicidade() {
         </button>
 
         <div className="relative z-10 flex flex-col items-center w-full mt-2">
-          <img src="/pedacinhadafelicidade.jpg" alt="Logo" className="w-56 h-20 sm:w-64 sm:h-24 object-cover object-center drop-shadow-sm mix-blend-multiply" />
+          <img src="/IMG-20260730-WA0114.jpg" alt="Logo" className="w-56 h-20 sm:w-64 sm:h-24 object-cover object-center drop-shadow-sm mix-blend-multiply" />
           <p className="text-orange-600 font-bold text-sm -mt-1 mb-3">Sua dose diária de alegria 💜</p>
           
           <div className="flex flex-col items-center gap-1.5">
@@ -278,17 +284,15 @@ export default function PedacinhoDeFelicidade() {
         </div>
       </header>
 
-      {/* RENDERIZAÇÃO DINÂMICA DE TODAS AS SEÇÕES */}
-      {sections.map((section) => {
-        if (!section.items || section.items.length === 0) return null;
-
-        // Se o layout for carrossel (estilo queridinhos)
-        if (section.layout === 'carousel') {
+      {/* SEÇÕES */}
+      {sections.map((sec) => {
+        if (!sec.items || sec.items.length === 0) return null;
+        if (sec.layout === 'carousel') {
           return (
-            <section key={section.id} className="pt-6">
-              <div className="px-4 mb-3 flex items-baseline justify-between"><h2 className="text-xl font-black text-orange-950">{section.title}</h2></div>
+            <section key={sec.id} className="pt-6">
+              <div className="px-4 mb-3 flex items-baseline justify-between"><h2 className="text-xl font-black text-orange-950">{sec.title}</h2></div>
               <div className="flex overflow-x-auto gap-3 px-4 pb-4 snap-x [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none' }}>
-                {section.items.map((item) => (
+                {sec.items.map((item) => (
                   <div key={item.id} className="min-w-[190px] max-w-[210px] bg-white rounded-2xl shadow-sm border border-orange-100 p-2.5 snap-center shrink-0 flex flex-col">
                     <div className="relative h-36 mb-2">
                       <img src={item.image || "https://images.unsplash.com/photo-1590137876181-2a5a7e340308?auto=format&fit=crop&q=80&w=600"} alt={item.name} className={`w-full h-full object-cover rounded-xl border-[3px] ${item.borderColor || 'border-orange-500'}`} />
@@ -306,13 +310,11 @@ export default function PedacinhoDeFelicidade() {
             </section>
           );
         }
-
-        // Layout padrão vertical (lista)
         return (
-          <section key={section.id} className="pt-6 px-4 max-w-md mx-auto">
-            <div className="mb-4"><h2 className="text-xl font-black text-orange-950">{section.title}</h2></div>
+          <section key={sec.id} className="pt-6 px-4 max-w-md mx-auto">
+            <div className="mb-4"><h2 className="text-xl font-black text-orange-950">{sec.title}</h2></div>
             <div className="flex flex-col gap-3">
-              {section.items.map((item) => (
+              {sec.items.map((item) => (
                 <div key={item.id} className="bg-white rounded-2xl shadow-sm border border-orange-100 p-3 flex gap-4 h-[120px]">
                   <div className="h-full w-24 shrink-0"><img src={item.image || "https://images.unsplash.com/photo-1579954115545-a95591f28bfc?auto=format&fit=crop&q=80&w=300"} alt={item.name} className="w-full h-full object-cover rounded-xl border border-orange-50" /></div>
                   <div className="flex-1 flex flex-col justify-between py-1">
@@ -393,14 +395,14 @@ export default function PedacinhoDeFelicidade() {
                 <div className="flex flex-col gap-4">
                   {orderHistory.map((order) => (
                     <button key={order.id} onClick={() => { setActiveOrder(order); setIsHistoryOpen(false); }} className="bg-white border border-slate-200 rounded-2xl p-4 text-left shadow-sm flex flex-col relative overflow-hidden">
-                      <div className={`absolute top-0 left-0 w-1.5 h-full ${order.status === 'aguardando' ? 'bg-orange-500' : order.status === 'producao' ? 'bg-pink-500' : 'bg-[#25D366]'}`}></div>
+                      <div className={`absolute top-0 left-0 w-1.5 h-full ${order.status === 'aguardando' ? 'bg-orange-500' : order.status === 'producao' ? 'bg-pink-500' : order.status === 'entrega' ? 'bg-blue-500' : 'bg-green-500'}`}></div>
                       <div className="flex justify-between items-start mb-2 pl-2">
                         <span className="font-black text-slate-800 text-lg">Pedido #{order.id}</span>
                         <span className="font-bold text-slate-800">R$ {order.total.toFixed(2)}</span>
                       </div>
                       <div className="pl-2 flex flex-col gap-1">
                         <span className="text-xs text-slate-500">{order.date}</span>
-                        <span className={`text-xs font-bold ${order.status === 'aguardando' ? 'text-orange-600' : order.status === 'producao' ? 'text-pink-600' : 'text-[#25D366]'}`}>
+                        <span className={`text-xs font-bold ${order.status === 'finalizado' ? 'text-green-600' : 'text-orange-600'}`}>
                           Status: {getStatusText(order.status)}
                         </span>
                       </div>
@@ -421,7 +423,7 @@ export default function PedacinhoDeFelicidade() {
               <span className="text-xs text-orange-600 font-bold uppercase">{cart.length} item(s)</span>
               <span className="text-slate-800 font-black text-2xl">R$ {cartSubtotal.toFixed(2)}</span>
             </div>
-            <button onClick={() => setIsCheckoutOpen(true)} className="bg-[#FFD100] text-yellow-900 px-8 py-4 rounded-full font-black text-lg shadow-lg">
+            <button onClick={() => setIsCheckoutOpen(true)} className="bg-[#FFD100] text-yellow-900 font-black px-8 py-4 rounded-full font-black text-lg shadow-lg">
               Ver Pedido
             </button>
           </div>
