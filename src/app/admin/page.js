@@ -3,6 +3,12 @@
 import React, { useState, useEffect } from "react";
 
 export default function AdminPanel() {
+  // Controle de Login (Salva na memória se já está logado)
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [usernameInput, setUsernameInput] = useState("");
+  const [passwordInput, setPasswordInput] = useState("");
+  const [loginError, setLoginError] = useState(false);
+
   const [activeTab, setActiveTab] = useState("sections"); // "sections", "toppings", "orders"
 
   const [sections, setSections] = useState([]);
@@ -10,6 +16,12 @@ export default function AdminPanel() {
   const [orders, setOrders] = useState([]);
 
   useEffect(() => {
+    // Verifica se já fez login antes neste navegador
+    const isLogged = sessionStorage.getItem("admin_logged");
+    if (isLogged === "true") {
+      setIsAuthenticated(true);
+    }
+
     if (localStorage.getItem("admin_sections")) {
       setSections(JSON.parse(localStorage.getItem("admin_sections")));
     } else {
@@ -57,6 +69,22 @@ export default function AdminPanel() {
     }
   }, []);
 
+  const handleLogin = (e) => {
+    e.preventDefault();
+    if (usernameInput === "pedacinhodafelicidadeadmin" && passwordInput === "pedacinhoadmin123") {
+      setIsAuthenticated(true);
+      sessionStorage.setItem("admin_logged", "true");
+      setLoginError(false);
+    } else {
+      setLoginError(true);
+    }
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    sessionStorage.removeItem("admin_logged");
+  };
+
   const saveAllChanges = () => {
     localStorage.setItem("admin_sections", JSON.stringify(sections));
     localStorage.setItem("admin_toppings", JSON.stringify(toppings));
@@ -88,7 +116,7 @@ export default function AdminPanel() {
     setSections(sections.map(s => s.id === secId ? { ...s, layout: newLayout } : s));
   };
 
-  // Gerenciamento de Produtos dentro de uma Seção
+  // Gerenciamento de Produtos
   const addItemToSection = (secId) => {
     const newItem = {
       id: Date.now().toString(),
@@ -113,7 +141,7 @@ export default function AdminPanel() {
     }));
   };
 
-  // Gerenciamento de Adicionais
+  // Adicionais
   const addTopping = () => {
     setToppings([...toppings, { id: Date.now().toString(), name: "Novo Adicional", price: 0, premium: false }]);
   };
@@ -132,6 +160,64 @@ export default function AdminPanel() {
     localStorage.setItem("pedacinho_orders", JSON.stringify(updated));
   };
 
+  // ==========================================
+  // TELA DE LOGIN SE NÃO ESTIVER AUTENTICADO
+  // ==========================================
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-orange-50 flex flex-col items-center justify-center p-4 font-sans">
+        <div className="bg-white w-full max-w-md rounded-3xl shadow-xl p-8 border border-orange-100 flex flex-col items-center">
+          <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4 text-orange-600">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          </div>
+          <h1 className="text-2xl font-black text-slate-800 mb-1">Área Restrita 🔒</h1>
+          <p className="text-sm text-slate-500 mb-6 text-center">Entre com os dados da administração para gerenciar a loja.</p>
+
+          <form onSubmit={handleLogin} className="w-full space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Nome de Usuário</label>
+              <input 
+                type="text" 
+                value={usernameInput} 
+                onChange={(e) => setUsernameInput(e.target.value)} 
+                placeholder="Digite o usuário"
+                className="w-full p-3 border rounded-xl font-medium bg-slate-50 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Senha</label>
+              <input 
+                type="password" 
+                value={passwordInput} 
+                onChange={(e) => setPasswordInput(e.target.value)} 
+                placeholder="Digite a senha"
+                className="w-full p-3 border rounded-xl font-medium bg-slate-50 focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm"
+                required
+              />
+            </div>
+
+            {loginError && (
+              <p className="text-xs font-bold text-red-500 text-center">Usuário ou senha incorretos!</p>
+            )}
+
+            <button type="submit" className="w-full bg-[#FFD100] text-yellow-900 font-black py-4 rounded-xl shadow-lg active:scale-95 transition-transform text-base mt-2">
+              Entrar no Painel
+            </button>
+          </form>
+
+          <div className="mt-6 pt-4 border-t border-slate-100 w-full text-center">
+            <a href="/" className="text-xs font-bold text-orange-600 hover:underline">← Voltar para a Loja</a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ==========================================
+  // PAINEL ADMIN COMPLETO (APÓS O LOGIN)
+  // ==========================================
   return (
     <div className="min-h-screen bg-slate-100 pb-20 font-sans">
       <header className="bg-slate-900 text-white px-6 py-4 flex justify-between items-center shadow-md">
@@ -139,9 +225,14 @@ export default function AdminPanel() {
           <h1 className="text-xl font-black">Painel Administrativo 🛠️</h1>
           <p className="text-xs text-slate-400">Um Pedacinho de Felicidade</p>
         </div>
-        <a href="/" target="_blank" className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-4 py-2 rounded-xl transition-colors">
-          Ver a Loja 🛍️
-        </a>
+        <div className="flex items-center gap-3">
+          <a href="/" target="_blank" className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-3 py-2 rounded-xl transition-colors">
+            Ver Loja 🛍️
+          </a>
+          <button onClick={handleLogout} className="bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white text-xs font-bold px-3 py-2 rounded-xl transition-colors">
+            Sair 🚪
+          </button>
+        </div>
       </header>
 
       {/* ABAS */}
@@ -181,7 +272,7 @@ export default function AdminPanel() {
                     value={sec.title} 
                     onChange={(e) => updateSectionTitle(sec.id, e.target.value)} 
                     className="flex-1 p-2.5 border rounded-xl font-black text-base text-slate-800 bg-slate-50"
-                    placeholder="Nome da Seção (ex: Bebidas)"
+                    placeholder="Nome da Seção"
                   />
                   <select 
                     value={sec.layout} 
