@@ -312,7 +312,7 @@ export default function PedacinhoDeFelicidade() {
             </div>
           ) : (
             <button onClick={() => setIsLoginModalOpen(true)} className="flex items-center gap-1 bg-white/90 px-3 py-1.5 rounded-xl border border-orange-200 shadow-sm text-xs font-bold text-orange-600">
-              ✉️ Entrar / Fidelidade
+              ✉️ Entrar 
             </button>
           )}
 
