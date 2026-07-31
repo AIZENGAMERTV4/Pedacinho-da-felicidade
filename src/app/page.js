@@ -40,13 +40,18 @@ export default function PedacinhoDeFelicidade() {
   const [sections, setSections] = useState(DEFAULT_SECTIONS);
   const [toppings, setToppings] = useState(DEFAULT_TOPPINGS);
 
+  // Sistema de Login do Cliente
+  const [loggedCustomer, setLoggedCustomer] = useState(null);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [loginPhone, setLoginPhone] = useState("");
+  const [loginName, setLoginName] = useState("");
+
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isPixScreenOpen, setIsPixScreenOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [activeOrder, setActiveOrder] = useState(null); 
   const [orderHistory, setOrderHistory] = useState([]);
 
-  const [customerName, setCustomerName] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("Pix");
   const [receiptFile, setReceiptFile] = useState(null);
@@ -62,6 +67,9 @@ export default function PedacinhoDeFelicidade() {
     }
     loadDataFromSupabase();
 
+    const savedCustomer = localStorage.getItem("pedacinho_customer");
+    if (savedCustomer) setLoggedCustomer(JSON.parse(savedCustomer));
+
     const savedOrders = localStorage.getItem("pedacinho_orders");
     if (savedOrders) setOrderHistory(JSON.parse(savedOrders));
 
@@ -74,6 +82,41 @@ export default function PedacinhoDeFelicidade() {
     const interval = setInterval(checkStatus, 60000); 
     return () => clearInterval(interval);
   }, []);
+
+  const handleCustomerLogin = async (e) => {
+    e.preventDefault();
+    if (!loginPhone || !loginName) {
+      alert("Por favor, preencha seu nome e seu WhatsApp/Telefone!");
+      return;
+    }
+
+    // Verificar se cliente já existe no Supabase
+    const { data } = await supabase.from('customers').select('*').eq('phone', loginPhone).single();
+    
+    let customerData;
+    if (data && data.customer_data) {
+      customerData = data.customer_data;
+      customerData.name = loginName; // Atualiza nome se mudou
+    } else {
+      customerData = {
+        phone: loginPhone,
+        name: loginName,
+        totalOrders: 0,
+        totalSpent: 0,
+        lastOrderDate: null
+      };
+    }
+
+    await supabase.from('customers').upsert({ phone: loginPhone, customer_data: customerData });
+    setLoggedCustomer(customerData);
+    localStorage.setItem("pedacinho_customer", JSON.stringify(customerData));
+    setIsLoginModalOpen(false);
+  };
+
+  const handleLogoutCustomer = () => {
+    setLoggedCustomer(null);
+    localStorage.removeItem("pedacinho_customer");
+  };
 
   const openBuilder = (item) => {
     if (!isOpen) {
@@ -116,13 +159,21 @@ export default function PedacinhoDeFelicidade() {
   const cartSubtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const cartTotal = cartSubtotal > 0 ? cartSubtotal + DELIVERY_FEE : 0;
 
-  const handleCheckoutSubmit = () => {
+  const handleStartCheckout = () => {
     if (cartSubtotal < MINIMUM_ORDER) {
       alert(`O pedido mínimo é de R$ ${MINIMUM_ORDER.toFixed(2).replace('.', ',')} (sem contar a entrega). Por favor, adicione mais itens!`);
       return;
     }
-    if (!customerName || !customerAddress) {
-      alert("Por favor, preencha seu nome e endereço para entrega!");
+    if (!loggedCustomer) {
+      setIsLoginModalOpen(true);
+      return;
+    }
+    setIsCheckoutOpen(true);
+  };
+
+  const handleCheckoutSubmit = () => {
+    if (!customerAddress) {
+      alert("Por favor, preencha seu endereço para entrega!");
       return;
     }
     setIsCheckoutOpen(false); 
@@ -158,14 +209,27 @@ export default function PedacinhoDeFelicidade() {
       items: [...cart],
       total: cartTotal,
       status: status,
-      customer: customerName,
+      customer: loggedCustomer.name,
+      phone: loggedCustomer.phone,
       address: customerAddress,
       payment: paymentMethod,
       pixReceipt: receiptImage,
       deliveryPhoto: null
     };
     
+    // Salvar pedido
     await supabase.from('orders').upsert({ id: orderId, order_data: newOrder });
+
+    // Atualizar dados de fidelidade do cliente no Supabase
+    const updatedCustomer = {
+      ...loggedCustomer,
+      totalOrders: (loggedCustomer.totalOrders || 0) + 1,
+      totalSpent: (loggedCustomer.totalSpent || 0) + cartTotal,
+      lastOrderDate: new Date().toLocaleDateString('pt-BR')
+    };
+    await supabase.from('customers').upsert({ phone: loggedCustomer.phone, customer_data: updatedCustomer });
+    setLoggedCustomer(updatedCustomer);
+    localStorage.setItem("pedacinho_customer", JSON.stringify(updatedCustomer));
 
     const updatedHistory = [newOrder, ...orderHistory];
     setOrderHistory(updatedHistory);
@@ -244,10 +308,24 @@ export default function PedacinhoDeFelicidade() {
         <div className="absolute inset-0 z-0 opacity-20 bg-cover bg-center" style={{ backgroundImage: "url('/IMG-20260730-WA0114.jpg')" }}></div>
         <div className="absolute inset-0 z-0 bg-white/70 backdrop-blur-md"></div>
         
-        <button onClick={() => setIsHistoryOpen(true)} className="absolute top-4 right-4 z-20 flex flex-col items-center justify-center p-2 rounded-xl bg-white/80 backdrop-blur-sm border border-orange-200 shadow-sm hover:bg-orange-50 transition-colors">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
-          <span className="text-[9px] font-black text-orange-600 uppercase mt-1">Pedidos</span>
-        </button>
+        {/* BOTÕES SUPERIORES */}
+        <div className="absolute top-4 right-4 z-20 flex gap-2">
+          {loggedCustomer ? (
+            <div className="flex items-center gap-2 bg-white/90 px-3 py-1.5 rounded-xl border border-orange-200 shadow-sm">
+              <span className="text-xs font-bold text-slate-800">Olá, {loggedCustomer.name.split(" ")[0]}! 💜</span>
+              <button onClick={handleLogoutCustomer} className="text-[10px] text-red-500 font-bold hover:underline">Sair</button>
+            </div>
+          ) : (
+            <button onClick={() => setIsLoginModalOpen(true)} className="flex items-center gap-1 bg-white/90 px-3 py-1.5 rounded-xl border border-orange-200 shadow-sm text-xs font-bold text-orange-600">
+              👤 Entrar / Fidelidade
+            </button>
+          )}
+
+          <button onClick={() => setIsHistoryOpen(true)} className="flex flex-col items-center justify-center p-2 rounded-xl bg-white/80 backdrop-blur-sm border border-orange-200 shadow-sm hover:bg-orange-50 transition-colors">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ea580c" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path><line x1="3" y1="6" x2="21" y2="6"></line><path d="M16 10a4 4 0 0 1-8 0"></path></svg>
+            <span className="text-[9px] font-black text-orange-600 uppercase mt-1">Pedidos</span>
+          </button>
+        </div>
 
         <div className="relative z-10 flex flex-col items-center w-full mt-2">
           <img src="/pedacinhadafelicidade.jpg" alt="Logo" className="w-56 h-20 sm:w-64 sm:h-24 object-cover object-center drop-shadow-sm mix-blend-multiply" />
@@ -274,6 +352,7 @@ export default function PedacinhoDeFelicidade() {
         </div>
       </header>
 
+      {/* SEÇÕES */}
       {sections.map((sec) => {
         if (!sec.items || sec.items.length === 0) return null;
         if (sec.layout === 'carousel') {
@@ -323,6 +402,32 @@ export default function PedacinhoDeFelicidade() {
         );
       })}
 
+      {/* MODAL DE LOGIN / CADASTRO DO CLIENTE */}
+      {isLoginModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6 flex flex-col items-center relative">
+            <button onClick={() => setIsLoginModalOpen(false)} className="absolute top-4 right-4 p-2 bg-orange-50 border border-orange-100 text-slate-600 rounded-full">✕</button>
+            <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-3 text-orange-600 font-black text-xl">👤</div>
+            <h2 className="text-xl font-black text-slate-800 mb-1">Identifique-se</h2>
+            <p className="text-xs text-slate-500 mb-6 text-center">Participe do nosso clube de fidelidade e ganhe descontos!</p>
+
+            <form onSubmit={handleCustomerLogin} className="w-full space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Seu Nome Completo</label>
+                <input type="text" value={loginName} onChange={(e) => setLoginName(e.target.value)} placeholder="Ex: Maria Silva" className="w-full p-3 border rounded-xl text-sm font-medium bg-slate-50" required />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Seu WhatsApp / Telefone</label>
+                <input type="tel" value={loginPhone} onChange={(e) => setLoginPhone(e.target.value)} placeholder="(74) 99999-9999" className="w-full p-3 border rounded-xl text-sm font-medium bg-slate-50" required />
+              </div>
+              <button type="submit" className="w-full bg-[#FFD100] text-yellow-900 font-black py-3 rounded-xl shadow-lg mt-2">
+                Continuar para o Pedido 🚀
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* MODAL DE ACOMPANHAMENTOS */}
       {buildingItem && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-end justify-center p-0 sm:p-4">
@@ -332,9 +437,7 @@ export default function PedacinhoDeFelicidade() {
                 <h2 className="text-lg font-black text-slate-800">Montar {buildingItem.name.split(" -")[0]}</h2>
                 <p className="text-xs text-orange-600 font-medium">Direito a {buildingItem.freeLimit || 3} itens grátis.</p>
               </div>
-              <button onClick={() => setBuildingItem(null)} className="p-2 bg-white border border-orange-100 text-slate-600 rounded-full">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-              </button>
+              <button onClick={() => setBuildingItem(null)} className="p-2 bg-white border border-orange-100 text-slate-600 rounded-full">✕</button>
             </div>
 
             <div className="p-5 overflow-y-auto" style={{ scrollbarWidth: 'none' }}>
@@ -372,9 +475,7 @@ export default function PedacinhoDeFelicidade() {
           <div className="bg-white w-full sm:w-[480px] max-h-[90vh] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden">
             <div className="px-6 py-5 border-b border-orange-100 flex justify-between items-center bg-orange-50/50">
               <h2 className="text-xl font-black text-slate-800">Meus Pedidos</h2>
-              <button onClick={() => setIsHistoryOpen(false)} className="p-2 bg-white border border-orange-100 text-slate-600 rounded-full">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-              </button>
+              <button onClick={() => setIsHistoryOpen(false)} className="p-2 bg-white border border-orange-100 text-slate-600 rounded-full">✕</button>
             </div>
             
             <div className="p-6 overflow-y-auto bg-slate-50 flex-1">
@@ -412,7 +513,7 @@ export default function PedacinhoDeFelicidade() {
               <span className="text-xs text-orange-600 font-bold uppercase">{cart.length} item(s)</span>
               <span className="text-slate-800 font-black text-2xl">R$ {cartSubtotal.toFixed(2)}</span>
             </div>
-            <button onClick={() => setIsCheckoutOpen(true)} className="bg-[#FFD100] text-yellow-900 px-8 py-4 rounded-full font-black text-lg shadow-lg">
+            <button onClick={handleStartCheckout} className="bg-[#FFD100] text-yellow-900 px-8 py-4 rounded-full font-black text-lg shadow-lg">
               Ver Pedido
             </button>
           </div>
@@ -424,18 +525,16 @@ export default function PedacinhoDeFelicidade() {
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div className="bg-white w-full sm:w-[480px] max-h-[90vh] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden">
             <div className="px-6 py-5 border-b border-orange-100 flex justify-between items-center bg-orange-50/50">
-              <h2 className="text-xl font-black text-slate-800">Seu Pedido</h2>
-              <button onClick={() => setIsCheckoutOpen(false)} className="p-2 bg-white border border-orange-100 text-slate-600 rounded-full">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-              </button>
+              <h2 className="text-xl font-black text-slate-800">Finalizar Pedido</h2>
+              <button onClick={() => setIsCheckoutOpen(false)} className="p-2 bg-white border border-orange-100 text-slate-600 rounded-full">✕</button>
             </div>
 
             <div className="p-6 overflow-y-auto">
               <div className="bg-orange-50 border border-orange-200 rounded-2xl p-5 mb-6">
-                <h3 className="font-black text-orange-600 mb-4">📍 Para onde vamos mandar?</h3>
+                <h3 className="font-black text-orange-600 mb-2">📍 Endereço de Entrega</h3>
+                <p className="text-xs text-slate-600 mb-3">Cliente: <b>{loggedCustomer?.name}</b> ({loggedCustomer?.phone})</p>
                 <div className="space-y-3">
-                  <input type="text" placeholder="Seu Nome Completo" value={customerName} onChange={(e) => setCustomerName(e.target.value)} className="w-full p-3 rounded-xl border border-orange-200 bg-white font-medium" />
-                  <textarea placeholder="Seu Endereço (Rua, Número, Bairro)" rows="2" value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} className="w-full p-3 rounded-xl border border-orange-200 bg-white font-medium" />
+                  <textarea placeholder="Seu Endereço (Rua, Número, Bairro, Ponto de Referência)" rows="3" value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} className="w-full p-3 rounded-xl border border-orange-200 bg-white font-medium text-sm" />
                   
                   <div className="pt-2">
                     <span className="text-sm font-bold text-slate-700 block mb-2">Forma de Pagamento:</span>
@@ -454,15 +553,9 @@ export default function PedacinhoDeFelicidade() {
                 <div className="flex justify-between text-orange-600 font-black text-xl pt-3 mt-3 border-t border-orange-200"><span>Total</span><span>R$ {cartTotal.toFixed(2)}</span></div>
               </div>
 
-              {cartSubtotal < MINIMUM_ORDER ? (
-                <button disabled className="w-full bg-slate-100 text-slate-400 font-black py-4 rounded-xl cursor-not-allowed">
-                  Faltam R$ {(MINIMUM_ORDER - cartSubtotal).toFixed(2).replace('.', ',')} para o pedido mínimo
-                </button>
-              ) : (
-                <button onClick={handleCheckoutSubmit} className="w-full bg-[#FFD100] text-yellow-900 font-black py-4 rounded-xl shadow-lg text-lg">
-                  Finalizar Pedido
-                </button>
-              )}
+              <button onClick={handleCheckoutSubmit} className="w-full bg-[#FFD100] text-yellow-900 font-black py-4 rounded-xl shadow-lg text-lg">
+                Fazer Pedido
+              </button>
             </div>
           </div>
         </div>
@@ -472,9 +565,7 @@ export default function PedacinhoDeFelicidade() {
       {isPixScreenOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6 flex flex-col items-center relative">
-            <button onClick={() => setIsPixScreenOpen(false)} className="absolute top-4 right-4 p-2 bg-orange-50 border border-orange-100 text-slate-600 rounded-full">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            </button>
+            <button onClick={() => setIsPixScreenOpen(false)} className="absolute top-4 right-4 p-2 bg-orange-50 border border-orange-100 text-slate-600 rounded-full">✕</button>
             <h2 className="text-xl font-black text-slate-800 mb-1">Pagamento via Pix</h2>
             <div className="text-3xl font-black text-[#32BCAD] mb-6">R$ {cartTotal.toFixed(2)}</div>
             <div className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 mb-6 flex items-center justify-between">

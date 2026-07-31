@@ -33,11 +33,12 @@ export default function AdminPanel() {
   const [passwordInput, setPasswordInput] = useState("");
   const [loginError, setLoginError] = useState(false);
 
-  const [activeTab, setActiveTab] = useState("sections"); // "sections", "toppings", "orders"
+  const [activeTab, setActiveTab] = useState("sections"); // "sections", "toppings", "orders", "customers"
 
   const [sections, setSections] = useState(DEFAULT_SECTIONS);
   const [toppings, setToppings] = useState(DEFAULT_TOPPINGS);
   const [orders, setOrders] = useState([]);
+  const [customers, setCustomers] = useState([]);
   const [modalImage, setModalImage] = useState(null);
 
   useEffect(() => {
@@ -56,6 +57,12 @@ export default function AdminPanel() {
         const formattedOrders = orderData.map(o => o.order_data);
         formattedOrders.sort((a, b) => b.id - a.id);
         setOrders(formattedOrders);
+      }
+
+      const { data: custData } = await supabase.from('customers').select('*');
+      if (custData) {
+        const formattedCustomers = custData.map(c => c.customer_data);
+        setCustomers(formattedCustomers);
       }
     }
     loadAdminData();
@@ -184,9 +191,7 @@ export default function AdminPanel() {
     return (
       <div className="min-h-screen bg-orange-50 flex flex-col items-center justify-center p-4 font-sans">
         <div className="bg-white w-full max-w-md rounded-3xl shadow-xl p-8 border border-orange-100 flex flex-col items-center">
-          <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4 text-orange-600">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-          </div>
+          <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4 text-orange-600 font-black text-xl">🔒</div>
           <h1 className="text-2xl font-black text-slate-800 mb-1">Área Restrita 🔒</h1>
           <p className="text-sm text-slate-500 mb-6 text-center">Entre com os dados da administração para gerenciar a loja.</p>
 
@@ -200,7 +205,7 @@ export default function AdminPanel() {
               <input type="password" value={passwordInput} onChange={(e) => setPasswordInput(e.target.value)} placeholder="Senha" className="w-full p-3 border rounded-xl font-medium bg-slate-50 text-sm" required />
             </div>
             {loginError && <p className="text-xs font-bold text-red-500 text-center">Usuário ou senha incorretos!</p>}
-            <button type="submit" className="w-full bg-[#FFD100] text-yellow-900 font-black py-4 rounded-xl shadow-lg active:scale-95 transition-transform text-base mt-2">
+            <button type="submit" className="w-full bg-[#FFD100] text-yellow-900 font-black py-4 rounded-xl shadow-lg mt-2">
               Entrar no Painel
             </button>
           </form>
@@ -241,6 +246,7 @@ export default function AdminPanel() {
           <button onClick={() => setActiveTab("sections")} className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm whitespace-nowrap ${activeTab === 'sections' ? 'bg-slate-900 text-white shadow' : 'text-slate-600'}`}>Seções & Produtos 📂</button>
           <button onClick={() => setActiveTab("toppings")} className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm whitespace-nowrap ${activeTab === 'toppings' ? 'bg-slate-900 text-white shadow' : 'text-slate-600'}`}>Adicionais 🍓</button>
           <button onClick={() => setActiveTab("orders")} className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm whitespace-nowrap ${activeTab === 'orders' ? 'bg-slate-900 text-white shadow' : 'text-slate-600'}`}>Pedidos ({orders.length}) 📦</button>
+          <button onClick={() => setActiveTab("customers")} className={`flex-1 py-3 px-4 rounded-xl font-bold text-sm whitespace-nowrap ${activeTab === 'customers' ? 'bg-slate-900 text-white shadow' : 'text-slate-600'}`}>Clientes ({customers.length}) 👥</button>
         </div>
       </div>
 
@@ -272,7 +278,6 @@ export default function AdminPanel() {
                   {sec.items.map((item) => (
                     <div key={item.id} className="flex gap-2 items-center bg-slate-50 p-3 rounded-xl border border-slate-100 flex-wrap sm:flex-nowrap">
                       
-                      {/* FOTO DO PRODUTO */}
                       <label className="w-14 h-14 bg-white rounded-xl overflow-hidden shrink-0 cursor-pointer relative group flex items-center justify-center border-2 border-dashed border-orange-300 shadow-sm">
                         {item.image ? (
                           <img src={item.image} alt="Produto" className="w-full h-full object-cover" />
@@ -282,38 +287,15 @@ export default function AdminPanel() {
                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[9px] font-bold transition-opacity">
                           Alterar
                         </div>
-                        <input 
-                          type="file" 
-                          accept="image/*" 
-                          className="hidden" 
-                          onChange={(e) => handleProductImageUpload(sec.id, item.id, e)} 
-                        />
+                        <input type="file" accept="image/*" className="hidden" onChange={(e) => handleProductImageUpload(sec.id, item.id, e)} />
                       </label>
 
                       <div className="flex-1 flex flex-col gap-1 w-full">
-                        <input 
-                          type="text" 
-                          value={item.name} 
-                          onChange={(e) => updateItemInSec(sec.id, item.id, 'name', e.target.value)} 
-                          className="w-full p-2 border rounded-lg text-sm font-bold bg-white text-slate-800" 
-                          placeholder="Nome do Produto"
-                        />
-                        <input 
-                          type="text" 
-                          value={item.description || ""} 
-                          onChange={(e) => updateItemInSec(sec.id, item.id, 'description', e.target.value)} 
-                          className="w-full p-1.5 border rounded-lg text-xs bg-white text-slate-500" 
-                          placeholder="Descrição"
-                        />
+                        <input type="text" value={item.name} onChange={(e) => updateItemInSec(sec.id, item.id, 'name', e.target.value)} className="w-full p-2 border rounded-lg text-sm font-bold bg-white text-slate-800" placeholder="Nome do Produto" />
+                        <input type="text" value={item.description || ""} onChange={(e) => updateItemInSec(sec.id, item.id, 'description', e.target.value)} className="w-full p-1.5 border rounded-lg text-xs bg-white text-slate-500" placeholder="Descrição" />
                       </div>
 
-                      <input 
-                        type="number" 
-                        value={item.price} 
-                        onChange={(e) => updateItemInSec(sec.id, item.id, 'price', Number(e.target.value))} 
-                        className="w-24 p-2 border rounded-lg text-sm font-bold text-orange-600 bg-white text-center" 
-                        placeholder="Preço"
-                      />
+                      <input type="number" value={item.price} onChange={(e) => updateItemInSec(sec.id, item.id, 'price', Number(e.target.value))} className="w-24 p-2 border rounded-lg text-sm font-bold text-orange-600 bg-white text-center" placeholder="Preço" />
 
                       <button onClick={() => removeItemFromSection(sec.id, item.id)} className="bg-red-100 text-red-600 p-2.5 rounded-xl font-bold text-xs hover:bg-red-200">🗑️</button>
                     </div>
@@ -373,7 +355,7 @@ export default function AdminPanel() {
                     </div>
 
                     <div className="pl-2 bg-slate-50 p-3 rounded-xl border border-slate-100 text-sm flex flex-col gap-1">
-                      <p className="font-bold text-slate-800">Cliente: {order.customer || "Não informado"}</p>
+                      <p className="font-bold text-slate-800">Cliente: {order.customer || "Não informado"} ({order.phone || "Sem tel"})</p>
                       <p className="text-slate-600">Endereço: {order.address || "Não informado"}</p>
                       <p className="text-xs font-bold text-[#32BCAD] mt-1">Forma de Pagamento: {order.payment || "Pix"}</p>
                       
@@ -416,6 +398,51 @@ export default function AdminPanel() {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* NOVA ABA: CLIENTES (FIDELIDADE) */}
+        {activeTab === "customers" && (
+          <div className="space-y-6">
+            <h2 className="text-lg font-black text-slate-800">Clube de Fidelidade & Clientes 👥</h2>
+            {customers.length === 0 ? (
+              <div className="bg-white rounded-2xl p-10 text-center text-slate-500 font-bold border border-slate-200">Nenhum cliente cadastrado ainda.</div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {customers.map((cust, idx) => {
+                  const ordersCount = cust.totalOrders || 0;
+                  const targetOrders = 5; // Meta de 5 compras para ganhar desconto
+                  const progress = Math.min((ordersCount / targetOrders) * 100, 100);
+
+                  return (
+                    <div key={idx} className="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 flex flex-col justify-between gap-4">
+                      <div>
+                        <div className="flex justify-between items-start">
+                          <h3 className="font-black text-slate-900 text-lg">{cust.name}</h3>
+                          <span className="bg-orange-100 text-orange-700 font-bold text-xs px-2.5 py-1 rounded-full">{ordersCount}ª compra</span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-0.5">📞 {cust.phone}</p>
+                        <p className="text-xs font-bold text-slate-700 mt-2">Total Gasto: R$ {(cust.totalSpent || 0).toFixed(2)}</p>
+                      </div>
+
+                      {/* BARRA DE PROGRESSO DA PROMOÇÃO */}
+                      <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                        <div className="flex justify-between text-xs font-bold text-slate-600 mb-1.5">
+                          <span>Progresso para Desconto</span>
+                          <span>{ordersCount} / {targetOrders} pedidos</span>
+                        </div>
+                        <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
+                          <div className="bg-gradient-to-r from-pink-500 to-orange-500 h-full transition-all duration-500" style={{ width: `${progress}%` }}></div>
+                        </div>
+                        <p className="text-[10px] text-slate-400 mt-1">
+                          {ordersCount >= targetOrders ? '🎉 Cliente apto para resgatar o desconto da promoção!' : `Faltam ${targetOrders - ordersCount} pedido(s) para a recompensa.`}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
