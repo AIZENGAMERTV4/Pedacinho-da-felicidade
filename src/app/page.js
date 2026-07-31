@@ -40,7 +40,6 @@ export default function PedacinhoDeFelicidade() {
   const [sections, setSections] = useState(DEFAULT_SECTIONS);
   const [toppings, setToppings] = useState(DEFAULT_TOPPINGS);
 
-  // Sistema de Login por E-mail
   const [loggedCustomer, setLoggedCustomer] = useState(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [loginEmail, setLoginEmail] = useState("");
@@ -90,7 +89,6 @@ export default function PedacinhoDeFelicidade() {
       return;
     }
 
-    // Busca segura no Supabase
     const { data } = await supabase.from('customers').select('*').eq('email', loginEmail).maybeSingle();
     
     let customerData;
@@ -107,7 +105,7 @@ export default function PedacinhoDeFelicidade() {
       };
     }
 
-    await supabase.from('customers').upsert({ email: loginEmail, customer_data: customerData });
+    await supabase.from('customers').upsert({ email: loginEmail, customer_data: customerData }, { onConflict: 'email' });
     setLoggedCustomer(customerData);
     localStorage.setItem("pedacinho_customer", JSON.stringify(customerData));
     setIsLoginModalOpen(false);
@@ -217,16 +215,15 @@ export default function PedacinhoDeFelicidade() {
       deliveryPhoto: null
     };
     
-    await supabase.from('orders').upsert({ id: orderId, order_data: newOrder });
+    await supabase.from('orders').upsert({ id: orderId, order_data: newOrder }, { onConflict: 'id' });
 
-    // Atualiza progresso do cliente no Supabase
     const updatedCustomer = {
       ...loggedCustomer,
       totalOrders: (loggedCustomer.totalOrders || 0) + 1,
       totalSpent: (loggedCustomer.totalSpent || 0) + cartTotal,
       lastOrderDate: new Date().toLocaleDateString('pt-BR')
     };
-    await supabase.from('customers').upsert({ email: loggedCustomer.email, customer_data: updatedCustomer });
+    await supabase.from('customers').upsert({ email: loggedCustomer.email, customer_data: updatedCustomer }, { onConflict: 'email' });
     setLoggedCustomer(updatedCustomer);
     localStorage.setItem("pedacinho_customer", JSON.stringify(updatedCustomer));
 
@@ -307,7 +304,6 @@ export default function PedacinhoDeFelicidade() {
         <div className="absolute inset-0 z-0 opacity-20 bg-cover bg-center" style={{ backgroundImage: "url('/IMG-20260730-WA0114.jpg')" }}></div>
         <div className="absolute inset-0 z-0 bg-white/70 backdrop-blur-md"></div>
         
-        {/* BOTÕES SUPERIORES */}
         <div className="absolute top-4 right-4 z-20 flex gap-2">
           {loggedCustomer ? (
             <div className="flex items-center gap-2 bg-white/90 px-3 py-1.5 rounded-xl border border-orange-200 shadow-sm">
