@@ -301,7 +301,7 @@ export default function PedacinhoDeFelicidade() {
   return (
     <div className="min-h-screen bg-orange-50 pb-32 font-sans selection:bg-pink-200">
       <header className="relative px-4 pt-4 pb-5 text-center shadow-sm flex flex-col items-center justify-center overflow-hidden border-b border-orange-100">
-        <div className="absolute inset-0 z-0 opacity-20 bg-cover bg-center" style={{ backgroundImage: "url('/IMG-20260730-WA0114.jpg')" }}></div>
+        <div className="absolute inset-0 z-0 opacity-20 bg-cover bg-center" style={{ backgroundImage: "url('/pedacinhadafelicidade.jpg')" }}></div>
         <div className="absolute inset-0 z-0 bg-white/70 backdrop-blur-md"></div>
         
         <div className="absolute top-4 right-4 z-20 flex gap-2">
