@@ -40,10 +40,10 @@ export default function PedacinhoDeFelicidade() {
   const [sections, setSections] = useState(DEFAULT_SECTIONS);
   const [toppings, setToppings] = useState(DEFAULT_TOPPINGS);
 
-  // Sistema de Login do Cliente
+  // Sistema de Login por E-mail
   const [loggedCustomer, setLoggedCustomer] = useState(null);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [loginPhone, setLoginPhone] = useState("");
+  const [loginEmail, setLoginEmail] = useState("");
   const [loginName, setLoginName] = useState("");
 
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -85,21 +85,21 @@ export default function PedacinhoDeFelicidade() {
 
   const handleCustomerLogin = async (e) => {
     e.preventDefault();
-    if (!loginPhone || !loginName) {
-      alert("Por favor, preencha seu nome e seu WhatsApp/Telefone!");
+    if (!loginEmail || !loginName) {
+      alert("Por favor, preencha seu nome e seu e-mail!");
       return;
     }
 
-    // Verificar se cliente já existe no Supabase
-    const { data } = await supabase.from('customers').select('*').eq('phone', loginPhone).single();
+    // Busca segura no Supabase
+    const { data } = await supabase.from('customers').select('*').eq('email', loginEmail).maybeSingle();
     
     let customerData;
     if (data && data.customer_data) {
       customerData = data.customer_data;
-      customerData.name = loginName; // Atualiza nome se mudou
+      customerData.name = loginName;
     } else {
       customerData = {
-        phone: loginPhone,
+        email: loginEmail,
         name: loginName,
         totalOrders: 0,
         totalSpent: 0,
@@ -107,7 +107,7 @@ export default function PedacinhoDeFelicidade() {
       };
     }
 
-    await supabase.from('customers').upsert({ phone: loginPhone, customer_data: customerData });
+    await supabase.from('customers').upsert({ email: loginEmail, customer_data: customerData });
     setLoggedCustomer(customerData);
     localStorage.setItem("pedacinho_customer", JSON.stringify(customerData));
     setIsLoginModalOpen(false);
@@ -210,24 +210,23 @@ export default function PedacinhoDeFelicidade() {
       total: cartTotal,
       status: status,
       customer: loggedCustomer.name,
-      phone: loggedCustomer.phone,
+      email: loggedCustomer.email,
       address: customerAddress,
       payment: paymentMethod,
       pixReceipt: receiptImage,
       deliveryPhoto: null
     };
     
-    // Salvar pedido
     await supabase.from('orders').upsert({ id: orderId, order_data: newOrder });
 
-    // Atualizar dados de fidelidade do cliente no Supabase
+    // Atualiza progresso do cliente no Supabase
     const updatedCustomer = {
       ...loggedCustomer,
       totalOrders: (loggedCustomer.totalOrders || 0) + 1,
       totalSpent: (loggedCustomer.totalSpent || 0) + cartTotal,
       lastOrderDate: new Date().toLocaleDateString('pt-BR')
     };
-    await supabase.from('customers').upsert({ phone: loggedCustomer.phone, customer_data: updatedCustomer });
+    await supabase.from('customers').upsert({ email: loggedCustomer.email, customer_data: updatedCustomer });
     setLoggedCustomer(updatedCustomer);
     localStorage.setItem("pedacinho_customer", JSON.stringify(updatedCustomer));
 
@@ -317,7 +316,7 @@ export default function PedacinhoDeFelicidade() {
             </div>
           ) : (
             <button onClick={() => setIsLoginModalOpen(true)} className="flex items-center gap-1 bg-white/90 px-3 py-1.5 rounded-xl border border-orange-200 shadow-sm text-xs font-bold text-orange-600">
-              👤 Entrar / Fidelidade
+              ✉️ Entrar / Fidelidade
             </button>
           )}
 
@@ -352,7 +351,6 @@ export default function PedacinhoDeFelicidade() {
         </div>
       </header>
 
-      {/* SEÇÕES */}
       {sections.map((sec) => {
         if (!sec.items || sec.items.length === 0) return null;
         if (sec.layout === 'carousel') {
@@ -402,14 +400,14 @@ export default function PedacinhoDeFelicidade() {
         );
       })}
 
-      {/* MODAL DE LOGIN / CADASTRO DO CLIENTE */}
+      {/* MODAL DE LOGIN POR E-MAIL */}
       {isLoginModalOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6 flex flex-col items-center relative">
             <button onClick={() => setIsLoginModalOpen(false)} className="absolute top-4 right-4 p-2 bg-orange-50 border border-orange-100 text-slate-600 rounded-full">✕</button>
-            <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-3 text-orange-600 font-black text-xl">👤</div>
+            <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mb-3 text-orange-600 font-black text-xl">✉️</div>
             <h2 className="text-xl font-black text-slate-800 mb-1">Identifique-se</h2>
-            <p className="text-xs text-slate-500 mb-6 text-center">Participe do nosso clube de fidelidade e ganhe descontos!</p>
+            <p className="text-xs text-slate-500 mb-6 text-center">Informe seu e-mail para participar da nossa promoção de descontos!</p>
 
             <form onSubmit={handleCustomerLogin} className="w-full space-y-3">
               <div>
@@ -417,8 +415,8 @@ export default function PedacinhoDeFelicidade() {
                 <input type="text" value={loginName} onChange={(e) => setLoginName(e.target.value)} placeholder="Ex: Maria Silva" className="w-full p-3 border rounded-xl text-sm font-medium bg-slate-50" required />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Seu WhatsApp / Telefone</label>
-                <input type="tel" value={loginPhone} onChange={(e) => setLoginPhone(e.target.value)} placeholder="(74) 99999-9999" className="w-full p-3 border rounded-xl text-sm font-medium bg-slate-50" required />
+                <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Seu E-mail</label>
+                <input type="email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} placeholder="seu@email.com" className="w-full p-3 border rounded-xl text-sm font-medium bg-slate-50" required />
               </div>
               <button type="submit" className="w-full bg-[#FFD100] text-yellow-900 font-black py-3 rounded-xl shadow-lg mt-2">
                 Continuar para o Pedido 🚀
@@ -532,7 +530,7 @@ export default function PedacinhoDeFelicidade() {
             <div className="p-6 overflow-y-auto">
               <div className="bg-orange-50 border border-orange-200 rounded-2xl p-5 mb-6">
                 <h3 className="font-black text-orange-600 mb-2">📍 Endereço de Entrega</h3>
-                <p className="text-xs text-slate-600 mb-3">Cliente: <b>{loggedCustomer?.name}</b> ({loggedCustomer?.phone})</p>
+                <p className="text-xs text-slate-600 mb-3">Cliente: <b>{loggedCustomer?.name}</b> ({loggedCustomer?.email})</p>
                 <div className="space-y-3">
                   <textarea placeholder="Seu Endereço (Rua, Número, Bairro, Ponto de Referência)" rows="3" value={customerAddress} onChange={(e) => setCustomerAddress(e.target.value)} className="w-full p-3 rounded-xl border border-orange-200 bg-white font-medium text-sm" />
                   

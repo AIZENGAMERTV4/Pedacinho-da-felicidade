@@ -355,7 +355,7 @@ export default function AdminPanel() {
                     </div>
 
                     <div className="pl-2 bg-slate-50 p-3 rounded-xl border border-slate-100 text-sm flex flex-col gap-1">
-                      <p className="font-bold text-slate-800">Cliente: {order.customer || "Não informado"} ({order.phone || "Sem tel"})</p>
+                      <p className="font-bold text-slate-800">Cliente: {order.customer || "Não informado"} ({order.email || "Sem e-mail"})</p>
                       <p className="text-slate-600">Endereço: {order.address || "Não informado"}</p>
                       <p className="text-xs font-bold text-[#32BCAD] mt-1">Forma de Pagamento: {order.payment || "Pix"}</p>
                       
@@ -403,17 +403,17 @@ export default function AdminPanel() {
           </div>
         )}
 
-        {/* NOVA ABA: CLIENTES (FIDELIDADE) */}
+        {/* ABA CLIENTES */}
         {activeTab === "customers" && (
           <div className="space-y-6">
             <h2 className="text-lg font-black text-slate-800">Clube de Fidelidade & Clientes 👥</h2>
             {customers.length === 0 ? (
-              <div className="bg-white rounded-2xl p-10 text-center text-slate-500 font-bold border border-slate-200">Nenhum cliente cadastrado ainda.</div>
+              <div className="bg-white rounded-2xl p-10 text-center text-slate-500 font-bold border border-slate-200">Nenhum cliente cadastrado na nuvem ainda.</div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {customers.map((cust, idx) => {
                   const ordersCount = cust.totalOrders || 0;
-                  const targetOrders = 5; // Meta de 5 compras para ganhar desconto
+                  const targetOrders = 5;
                   const progress = Math.min((ordersCount / targetOrders) * 100, 100);
 
                   return (
@@ -423,11 +423,10 @@ export default function AdminPanel() {
                           <h3 className="font-black text-slate-900 text-lg">{cust.name}</h3>
                           <span className="bg-orange-100 text-orange-700 font-bold text-xs px-2.5 py-1 rounded-full">{ordersCount}ª compra</span>
                         </div>
-                        <p className="text-xs text-slate-500 mt-0.5">📞 {cust.phone}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">✉️ {cust.email}</p>
                         <p className="text-xs font-bold text-slate-700 mt-2">Total Gasto: R$ {(cust.totalSpent || 0).toFixed(2)}</p>
                       </div>
 
-                      {/* BARRA DE PROGRESSO DA PROMOÇÃO */}
                       <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
                         <div className="flex justify-between text-xs font-bold text-slate-600 mb-1.5">
                           <span>Progresso para Desconto</span>
